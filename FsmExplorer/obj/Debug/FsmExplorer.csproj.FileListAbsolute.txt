@@ -1,0 +1,15 @@
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\FsmExplorer.exe.config
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\FsmExplorer.exe
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\FsmExplorer.pdb
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\FA.dll
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\LexContext.dll
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\FA.pdb
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\bin\Debug\LexContext.pdb
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.csproj.AssemblyReference.cache
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.Main.resources
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.Properties.Resources.resources
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.csproj.GenerateResource.cache
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.csproj.CoreCompileInputs.cache
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.csproj.CopyComplete
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.exe
+C:\Users\gazto\source\repos\FsmExplorer\FsmExplorer\obj\Debug\FsmExplorer.pdb

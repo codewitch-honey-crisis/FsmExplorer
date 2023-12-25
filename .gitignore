@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+*.v2
+*.bin
+/.vs/
+/FastFA/bin/
+/FastFA/obj/
+/LexContext/bin/
+/LexContext/obj/
+/SimpleDemo/bin/
+/SimpleDemo/obj/
+/SimpleDemo/ident.jpg
+/CharClsTableGen/bin/
+/CharClsTableGen/obj/
