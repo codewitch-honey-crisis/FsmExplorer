@@ -3,6 +3,9 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using F;
+
+using LC;
+
 namespace FsmExplorer
 {
 	public partial class Main : Form
@@ -50,6 +53,7 @@ namespace FsmExplorer
 		}
 		private void Regex_Validated(object sender, EventArgs e)
 		{
+			Error.Text = "";
 			Render();
 		}
 
@@ -60,6 +64,11 @@ namespace FsmExplorer
 				nfa = FA.Parse(Regex.Text,0,false);
 				dfa = null;
 				dfa_min = null;
+			}
+			catch(ExpectingException ex)
+			{
+				e.Cancel = true;
+				Error.Text = ex.Message;
 			}
 			catch
 			{

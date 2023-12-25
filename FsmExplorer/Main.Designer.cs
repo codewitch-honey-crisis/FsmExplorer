@@ -37,6 +37,7 @@
 			this.Timeout = new System.Windows.Forms.Timer(this.components);
 			this.NfaDfa = new System.Windows.Forms.RadioButton();
 			this.OptimizedDfa = new System.Windows.Forms.RadioButton();
+			this.Error = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.Graph)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -64,7 +65,7 @@
 			// label2
 			// 
 			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(16, 44);
+			this.label2.Location = new System.Drawing.Point(14, 67);
 			this.label2.Name = "label2";
 			this.label2.Size = new System.Drawing.Size(46, 20);
 			this.label2.TabIndex = 2;
@@ -74,7 +75,7 @@
 			// 
 			this.Input.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.Input.Location = new System.Drawing.Point(74, 44);
+			this.Input.Location = new System.Drawing.Point(72, 67);
 			this.Input.Name = "Input";
 			this.Input.Size = new System.Drawing.Size(532, 26);
 			this.Input.TabIndex = 3;
@@ -85,9 +86,9 @@
 			this.Graph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.Graph.Location = new System.Drawing.Point(16, 106);
+			this.Graph.Location = new System.Drawing.Point(16, 130);
 			this.Graph.Name = "Graph";
-			this.Graph.Size = new System.Drawing.Size(590, 306);
+			this.Graph.Size = new System.Drawing.Size(590, 282);
 			this.Graph.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
 			this.Graph.TabIndex = 4;
 			this.Graph.TabStop = false;
@@ -101,7 +102,7 @@
 			// 
 			this.NfaDfa.AutoSize = true;
 			this.NfaDfa.Checked = true;
-			this.NfaDfa.Location = new System.Drawing.Point(20, 76);
+			this.NfaDfa.Location = new System.Drawing.Point(18, 99);
 			this.NfaDfa.Name = "NfaDfa";
 			this.NfaDfa.Size = new System.Drawing.Size(103, 24);
 			this.NfaDfa.TabIndex = 5;
@@ -112,7 +113,7 @@
 			// OptimizedDfa
 			// 
 			this.OptimizedDfa.AutoSize = true;
-			this.OptimizedDfa.Location = new System.Drawing.Point(130, 77);
+			this.OptimizedDfa.Location = new System.Drawing.Point(128, 100);
 			this.OptimizedDfa.Name = "OptimizedDfa";
 			this.OptimizedDfa.Size = new System.Drawing.Size(142, 24);
 			this.OptimizedDfa.TabIndex = 6;
@@ -121,11 +122,23 @@
 			this.OptimizedDfa.UseVisualStyleBackColor = true;
 			this.OptimizedDfa.CheckedChanged += new System.EventHandler(this.OptimizedDfa_CheckedChanged);
 			// 
+			// Error
+			// 
+			this.Error.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.Error.AutoEllipsis = true;
+			this.Error.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+			this.Error.Location = new System.Drawing.Point(13, 38);
+			this.Error.Name = "Error";
+			this.Error.Size = new System.Drawing.Size(591, 23);
+			this.Error.TabIndex = 7;
+			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(618, 424);
+			this.Controls.Add(this.Error);
 			this.Controls.Add(this.OptimizedDfa);
 			this.Controls.Add(this.NfaDfa);
 			this.Controls.Add(this.Graph);
@@ -151,6 +164,7 @@
 		private System.Windows.Forms.Timer Timeout;
 		private System.Windows.Forms.RadioButton NfaDfa;
 		private System.Windows.Forms.RadioButton OptimizedDfa;
+		private System.Windows.Forms.Label Error;
 	}
 }
 

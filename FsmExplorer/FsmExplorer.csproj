@@ -84,6 +84,10 @@
       <Project>{518f5599-f91d-4873-8e39-a39aa9072d2c}</Project>
       <Name>FA</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LexContext\LexContext.csproj">
+      <Project>{73417356-c733-4a87-937a-fddebef3a9c2}</Project>
+      <Name>LexContext</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

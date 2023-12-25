@@ -67,7 +67,7 @@ using System.Text.RegularExpressions;
 using LC;
 namespace F
 {
-#if FFALIB
+#if FALIB
 	public
 #endif
 	partial struct FATransition
@@ -83,26 +83,8 @@ namespace F
 		}
 
 	}
-#if FFALIB
-	public
-#endif
-	partial class FAToken
-	{
-		internal FAToken(int symbolId, string value, long position, int line, int column)
-		{
-			SymbolId = symbolId;
-			Value = value;
-			Position = position;
-			Line = line;
-			Column = column;
-		}
-		public int SymbolId { get; }
-		public string Value { get; }
-		public long Position { get; }
-		public int Line { get; }
-		public int Column { get; }
-	}
-#if FFALIB
+
+#if FALIB
 	public
 #endif
 	partial class FA
@@ -2173,55 +2155,7 @@ namespace F
 				return result;
 			}
 		}
-		public IEnumerable<FAToken> Lex(IEnumerable<int> @string, int tabWidth = 4,long position = 0, long index = 0, int line = 1, int column = 1)
-		{
-			var tpos = position;
-			var tln = line;
-			var tcol = column;
-			var sb = new StringBuilder();
-			if (IsDeterministic)
-			{
-				FA state = this;
-				foreach (var codepoint in @string)
-				{
-					FA next = state.DfaMove(codepoint);
-					if(next==null) {
-						state = this;
-						if (sb.Length > 0)
-						{
-							yield return new FAToken(next.AcceptSymbol, sb.ToString(), tpos, tln, tcol);
-						}
-						tpos = position;
-						tln = line;
-						tcol = column;
-					}
-					++position;
-					switch (codepoint)
-					{
-						case '\r':
-							column = 1;
-							break;
-						case '\n':
-							++line;
-							column = 1;
-							break;
-						case '\t':
-							column = ((column - 1) / tabWidth) * (tabWidth + 1) + 1;
-							break;
-						default:
-							if (codepoint >= ' ')
-							{
-								++column;
-							}
-							break;
-					}
-				}
-			}
-			else
-			{
-
-			}
-		}
+		
 		/// <summary>
 		/// Indicates whether this machine will match the indicated text
 		/// </summary>
