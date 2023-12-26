@@ -8,7 +8,7 @@ C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.Generated
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.AssemblyInfoInputs.cache
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.AssemblyInfo.cs
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.csproj.CoreCompileInputs.cache
+C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.sourcelink.json
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.csproj.CopyComplete
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.dll
 C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.pdb
-C:\Users\gazto\source\repos\FsmExplorer\FA\obj\Debug\netstandard2.0\FA.sourcelink.json
