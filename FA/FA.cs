@@ -84,7 +84,10 @@ namespace F
 		}
 
 	}
-
+#if FALIB
+	public
+#endif
+	delegate bool FAFindFilter(FA state);
 #if FALIB
 	public
 #endif
@@ -95,6 +98,8 @@ namespace F
 		public int Tag = 0;
 		public FA[] FromStates = null;
 		public int Id = -1;
+		public static readonly FAFindFilter AcceptingFilter = new FAFindFilter((FA state)=>{ return state.IsAccepting; });
+		public static readonly FAFindFilter FinalFilter = new FAFindFilter((FA state) => { return state.IsFinal; });
 		public readonly List<FATransition> Transitions = new List<FATransition>();
 		public FA(int acceptSymbol)
 		{
@@ -196,6 +201,58 @@ namespace F
 			_Closure(result, set);
 			return result;
 		}
+		void _Find(FAFindFilter filter, IList<FA> result, ISet<FA> seen)
+		{
+			if (!seen.Add(this))
+			{
+				return;
+			}
+			if (filter(this))
+			{
+				result.Add(this);
+			}
+			for (int ic = Transitions.Count, i = 0; i < ic; ++i)
+			{
+				var t = Transitions[i];
+				t.To._Find(filter,result, seen);
+			}
+		}
+
+		public IList<FA> FillFind(FAFindFilter filter, IList<FA> result = null)
+		{
+			if (null == result)
+				result = new List<FA>();
+			var set = new HashSet<FA>();
+			_Find(filter, result, set);
+			return result;
+		}
+		FA _FindFirst(FAFindFilter filter, ISet<FA> seen)
+		{
+			if (!seen.Add(this))
+			{
+				return null;
+			}
+			if (filter(this))
+			{
+				return this;
+			}
+			for (int ic = Transitions.Count, i = 0; i < ic; ++i)
+			{
+				var t = Transitions[i];
+				var fa = t.To._FindFirst(filter, seen);
+				if(null!=fa)
+				{
+					return fa;
+				}
+			}
+			return null;
+		}
+
+		public FA FindFirst(FAFindFilter filter)
+		{
+			var set = new HashSet<FA>();
+			return _FindFirst(filter, set);
+		}
 		public IList<FA> FillEpsilonClosure(IList<FA> result = null)
 		{
 			if (null == result)
@@ -271,7 +328,7 @@ namespace F
 
 		public IList<FA> FillAcceptingStates(IList<FA> result = null)
 		{
-			return FillAcceptingStates(FillClosure(), result);
+			return FillFind(AcceptingFilter, result);
 		}
 		public static IList<FA> FillAcceptingStates(IList<FA> closure, IList<FA> result = null)
 		{
@@ -519,7 +576,7 @@ namespace F
 							//Debug.Assert(null != expr.FirstAcceptingState);
 							return expr;
 						default:
-							result = Concat(new FA[] { expr, Repeat(expr.Clone(), 0, maxOccurs - 1,accept,compact) }, accept,compact);
+							result = Concat(new FA[] { expr, Repeat(expr, 0, maxOccurs - 1,accept,compact) }, accept,compact);
 							//Debug.Assert(null != result.FirstAcceptingState);
 							return result;
 					}
@@ -549,7 +606,7 @@ namespace F
 								//Debug.Assert(null != result.FirstAcceptingState);
 								return result;
 							}
-							result = Concat(new FA[] { Repeat(expr.Clone(), minOccurs, minOccurs, accept,compact), Repeat(Optional(expr.Clone(),accept,compact), maxOccurs - minOccurs, maxOccurs - minOccurs, accept,compact) }, accept,compact);
+							result = Concat(new FA[] { Repeat(expr, minOccurs, minOccurs, accept,compact), Repeat(Optional(expr,accept,compact), maxOccurs - minOccurs, maxOccurs - minOccurs, accept,compact) }, accept,compact);
 							//Debug.Assert(null != result.FirstAcceptingState);
 							return result;
 					}

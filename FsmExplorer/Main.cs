@@ -24,7 +24,7 @@ namespace FsmExplorer
 				Graph.Image = null;
 				return;
 			}
-			var opts = new FA.DotGraphOptions();
+			var opts = new FADotGraphOptions();
 			opts.HideAcceptSymbolIds = true;
 			opts.DebugString = Input.Text;
 			FA fa = null;

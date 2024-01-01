@@ -8,40 +8,39 @@ using System.Text;
 
 namespace F
 {
+	/// <summary>
+	/// Represents optional rendering parameters for a dot graph.
+	/// </summary>
+	public sealed class FADotGraphOptions
+	{
+		/// <summary>
+		/// The resolution, in dots-per-inch to render at
+		/// </summary>
+		public int Dpi { get; set; } = 300;
+		/// <summary>
+		/// The prefix used for state labels
+		/// </summary>
+		public string StatePrefix { get; set; } = "q";
+
+		/// <summary>
+		/// If non-null, specifies a debug render using the specified input string.
+		/// </summary>
+		/// <remarks>The debug render is useful for tracking the transitions in a state machine</remarks>
+		public IEnumerable<char> DebugString { get; set; } = null;
+		/// <summary>
+		/// If non-null, specifies the source NFA from which this DFA was derived - used for debug view
+		/// </summary>
+		public FA DebugSourceNfa { get; set; } = null;
+
+		public bool DebugShowNfa { get; set; } = false;
+		public bool HideAcceptSymbolIds { get; set; } = false;
+		public string[] AcceptSymbolNames { get; set; } = null;
+		public bool Vertical { get; set; } = false;
+	}
 	partial class FA
 	{
 
-		#region DotGraphOptions
-		/// <summary>
-		/// Represents optional rendering parameters for a dot graph.
-		/// </summary>
-		public sealed class DotGraphOptions
-		{
-			/// <summary>
-			/// The resolution, in dots-per-inch to render at
-			/// </summary>
-			public int Dpi { get; set; } = 300;
-			/// <summary>
-			/// The prefix used for state labels
-			/// </summary>
-			public string StatePrefix { get; set; } = "q";
-
-			/// <summary>
-			/// If non-null, specifies a debug render using the specified input string.
-			/// </summary>
-			/// <remarks>The debug render is useful for tracking the transitions in a state machine</remarks>
-			public IEnumerable<char> DebugString { get; set; } = null;
-			/// <summary>
-			/// If non-null, specifies the source NFA from which this DFA was derived - used for debug view
-			/// </summary>
-			public FA DebugSourceNfa { get; set; } = null;
-
-			public bool DebugShowNfa { get; set; } = false;
-			public bool HideAcceptSymbolIds { get; set; } = false;
-			public bool Vertical { get; set; } = false;
-		}
-		#endregion
-		static void _WriteCompoundDotTo(IList<FA> closure, TextWriter writer, DotGraphOptions options = null)
+		static void _WriteCompoundDotTo(IList<FA> closure, TextWriter writer, FADotGraphOptions options = null)
 		{
 			writer.WriteLine("digraph FA {");
 			var vert = true;
@@ -51,7 +50,7 @@ namespace F
 				vert = false;
 			}
 			writer.WriteLine("node [shape=circle]");
-			var opt2 = new DotGraphOptions();
+			var opt2 = new FADotGraphOptions();
 			opt2.DebugSourceNfa = null;
 			opt2.StatePrefix = options.StatePrefix;
 			opt2.DebugString = options.DebugString;
@@ -74,10 +73,10 @@ namespace F
 		/// </summary>
 		/// <param name="closure">The closure of all states</param>
 		/// <param name="writer">The writer</param>
-		/// <param name="options">A <see cref="DotGraphOptions"/> instance with any options, or null to use the defaults</param>
-		static void _WriteDotTo(IList<FA> closure, TextWriter writer, DotGraphOptions options = null, int clusterIndex = -1)
+		/// <param name="options">A <see cref="FADotGraphOptions"/> instance with any options, or null to use the defaults</param>
+		static void _WriteDotTo(IList<FA> closure, TextWriter writer, FADotGraphOptions options = null, int clusterIndex = -1)
 		{
-			if (null == options) options = new DotGraphOptions();
+			if (null == options) options = new FADotGraphOptions();
 			string spfx = null == options.StatePrefix ? "q" : options.StatePrefix;
 			string pfx = "";
 			if (clusterIndex != -1)
@@ -278,7 +277,22 @@ namespace F
 				if (ffa.IsAccepting && !options.HideAcceptSymbolIds)
 				{
 					writer.Write("<TR><TD>");
-					writer.Write(Convert.ToString(ffa.AcceptSymbol).Replace("\"", "&quot;"));
+					string acc = null;
+					if (options.AcceptSymbolNames != null && options.AcceptSymbolNames.Length > 0)
+					{
+						try
+						{
+							acc = options.AcceptSymbolNames[ffa.AcceptSymbol];
+						}
+						catch
+						{
+						}
+					}
+					if(acc==null)
+					{
+						acc = Convert.ToString(ffa.AcceptSymbol);
+					}
+					writer.Write(acc.Replace("\"", "&quot;"));
 					writer.Write("</TD></TR>");
 
 				}
@@ -348,11 +362,11 @@ namespace F
 		/// Renders Graphviz output for this machine to the specified file
 		/// </summary>
 		/// <param name="filename">The output filename. The format to render is indicated by the file extension.</param>
-		/// <param name="options">A <see cref="DotGraphOptions"/> instance with any options, or null to use the defaults</param>
-		public void RenderToFile(string filename, DotGraphOptions options = null)
+		/// <param name="options">A <see cref="FADotGraphOptions"/> instance with any options, or null to use the defaults</param>
+		public void RenderToFile(string filename, FADotGraphOptions options = null)
 		{
 			if (null == options)
-				options = new DotGraphOptions();
+				options = new FADotGraphOptions();
 			string args = "-T";
 			string ext = Path.GetExtension(filename);
 			if(0==string.Compare(".dot", ext,StringComparison.InvariantCultureIgnoreCase)) {
@@ -388,7 +402,7 @@ namespace F
 			}
 
 		}
-		public void WriteDotTo(TextWriter writer, DotGraphOptions options = null)
+		public void WriteDotTo(TextWriter writer, FADotGraphOptions options = null)
 		{
 			if (options.DebugSourceNfa != null && options.DebugShowNfa)
 			{
@@ -404,12 +418,12 @@ namespace F
 		/// </summary>
 		/// <param name="format">The output format. The format to render can be any supported dot output format or "dot" to render a dot file. See dot command line documation for details.</param>
 		/// <param name="copy">True to copy the stream, otherwise false</param>
-		/// <param name="options">A <see cref="DotGraphOptions"/> instance with any options, or null to use the defaults</param>
+		/// <param name="options">A <see cref="FADotGraphOptions"/> instance with any options, or null to use the defaults</param>
 		/// <returns>A stream containing the output. The caller is expected to close the stream when finished.</returns>
-		public Stream RenderToStream(string format, bool copy = false, DotGraphOptions options = null)
+		public Stream RenderToStream(string format, bool copy = false, FADotGraphOptions options = null)
 		{
 			if (null == options)
-				options = new DotGraphOptions();
+				options = new FADotGraphOptions();
 			if(0==string.Compare(format,"dot",StringComparison.InvariantCultureIgnoreCase))
 			{
 				var stm = new MemoryStream();
