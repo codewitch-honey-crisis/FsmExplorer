@@ -1706,7 +1706,7 @@ namespace F
 				return new _FListNode(q, this);
 			}
 		}
-		public int[] ToTable(IProgress<int> progress = null)
+		public int[] ToTable()
 		{
 			var working = new List<int>();
 			var closure = new List<FA>();

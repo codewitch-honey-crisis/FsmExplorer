@@ -10,23 +10,28 @@ namespace SimpleDemo {
 			var ast = RegexExpression.Parse(exp);
 			Console.WriteLine(ast);
 
-			var nfa = ast.ToFA(0);
+			var nfa = ast.ToFA(0,false);
 			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
 			// don't need to see accept symbol ids
 			opts.HideAcceptSymbolIds = false;
-			opts.AcceptSymbolNames = new string[] { "Accept" };
+			opts.AcceptSymbolNames = new string[] { "accept" };
 			// uncomment to show expanded epsilons
 			//nfa.Compact();
 			// used for debugging
 			nfa.SetIds();
-			nfa = FA.FromTable(nfa.ToTable());
-			nfa.RenderToFile(@"..\..\..\ident_or_num_nfa.jpg",opts);
+			var table = nfa.ToTable();
+			Console.WriteLine("NFA table length is {0} entries.",table.Length);
+			nfa = FA.FromTable(table);
+			nfa.RenderToFile(@"..\..\..\expression_nfa.jpg",opts);
+			nfa.RenderToFile(@"..\..\..\expression_nfa.dot", opts);
 			var dfa = nfa.ToDfa();
-			
-			dfa.ToMinimized().RenderToFile(@"..\..\..\keyword_or_num_min.jpg",opts);
+			var mdfa = dfa.ToMinimized();
+			table = mdfa.ToTable();
+			Console.WriteLine("Min DFA table length is {0} entries.", table.Length);
+			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.jpg",opts);
 
-			dfa.ToMinimized().RenderToFile(@"..\..\..\keyword_or_num_min.dot", opts);
+			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.dot", opts);
 		}
     }
 }

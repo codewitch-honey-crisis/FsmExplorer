@@ -56,7 +56,7 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public abstract FA ToFA(int accept);
+		public abstract FA ToFA(int accept,bool compact = true);
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
 		/// </summary>
@@ -1049,13 +1049,20 @@ namespace F
 		/// </summary>
 		/// <param name="value">The string to use</param>
 		/// <returns>An expression representing <paramref name="value"/></returns>
-		public static RegexExpression CreateString(string value)
+		public static RegexExpression FromString(IEnumerable<char> value)
 		{
-			if (string.IsNullOrEmpty(value))
-				return null;
-			RegexExpression result = new RegexLiteralExpression(value[0]);
-			for (var i = 1; i < value.Length; i++)
-				result = new RegexConcatExpression(result, new RegexLiteralExpression(value[i]));
+			RegexExpression result = null; 
+			foreach (var v in FA.ToUtf32(value))
+			{
+				if (result == null)
+				{
+					result = new RegexLiteralExpression(v);
+				}
+				else
+				{
+					result = new RegexConcatExpression(result, new RegexLiteralExpression(v));
+				}
+			}
 			return result;
 		}
 		/// <summary>
@@ -1078,8 +1085,8 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public override FA ToFA(int accept)
-			=> FA.Literal(FA.ToUtf32(Value), accept);
+		public override FA ToFA(int accept, bool compact = true)
+			=> FA.Literal(FA.ToUtf32(Value), accept, compact);
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
 		/// </summary>
@@ -1571,7 +1578,7 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public override FA ToFA(int accept)
+		public override FA ToFA(int accept, bool compact = true)
 		{
 			var ranges = new List<KeyValuePair<int, int>>();
 			for (int ic = Entries.Count, i = 0; i < ic; ++i)
@@ -1594,8 +1601,8 @@ namespace F
 				}
 			}
 			if (HasNegatedRanges)
-				return FA.Set(FA.NotRanges(ranges), accept);
-			return FA.Set(ranges, accept);
+				return FA.Set(FA.NotRanges(ranges), accept,compact);
+			return FA.Set(ranges, accept,compact);
 		}
 		/// <summary>
 		/// Indicates whether the range is a "not range"
@@ -1801,13 +1808,13 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public override FA ToFA(int accept)
+		public override FA ToFA(int accept, bool compact = true)
 		{
 			if (null == Left)
 				return (null != Right) ? Right.ToFA(accept) : null;
 			else if (null == Right)
 				return Left.ToFA(accept);
-			return FA.Concat(new FA[] { Left.ToFA(accept), Right.ToFA(accept) }, accept);
+			return FA.Concat(new FA[] { Left.ToFA(accept), Right.ToFA(accept) }, accept,compact);
 		}
 		/// <summary>
 		/// Creates a new copy of this expression
@@ -1953,11 +1960,11 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public override FA ToFA(int accept)
+		public override FA ToFA(int accept, bool compact = true)
 		{
-			var left = (null != Left) ? Left.ToFA(accept) : null;
-			var right = (null != Right) ? Right.ToFA(accept) : null;
-			return FA.Or(new FA[] { left, right }, accept);
+			var left = (null != Left) ? Left.ToFA(accept,compact) : null;
+			var right = (null != Right) ? Right.ToFA(accept,compact) : null;
+			return FA.Or(new FA[] { left, right }, accept,compact);
 		}
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
@@ -2073,8 +2080,8 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
-		public override FA ToFA(int accept)
-			=> null != Expression ? FA.Optional(Expression.ToFA(accept), accept) : null;
+		public override FA ToFA(int accept, bool compact = true)
+			=> null != Expression ? FA.Optional(Expression.ToFA(accept,compact), accept,compact) : null;
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
 		/// </summary>
@@ -2207,8 +2214,8 @@ namespace F
 		/// </summary>
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>		
-		public override FA ToFA(int accept)
-			=> null != Expression ? FA.Repeat(Expression.ToFA(accept), MinOccurs, MaxOccurs, accept) : null;
+		public override FA ToFA(int accept, bool compact = true)
+			=> null != Expression ? FA.Repeat(Expression.ToFA(accept,compact), MinOccurs, MaxOccurs, accept,compact) : null;
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
 		/// </summary>
