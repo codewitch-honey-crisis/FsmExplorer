@@ -301,13 +301,14 @@ namespace F
    			{
    				nclosure[i] = new FA(closure[i].AcceptSymbol);
    				nclosure[i].Tag = closure[i].Tag;
+				nclosure[i].FromStates = closure[i].FromStates;
    			}
    			for (var i = 0; i < nclosure.Length; i++)
    			{
    				var t = nclosure[i].Transitions;
    				foreach (var trns in closure[i].Transitions)
    				{
-   					if (trns.To.FillClosure().Contains(to))
+					if (trns.To.FindFirst((fa) => { return (fa == to); })!=null)
    					{
    						var id = closure.IndexOf(trns.To);
    						t.Add(new FATransition(trns.Min,trns.Max, nclosure[id]));
@@ -323,7 +324,7 @@ namespace F
 			for(int i = 0;i<closure.Count;++i)
 			{
 				var fa = closure[i];
-				if(fa.FillClosure().Contains(to))
+				if(fa.FindFirst((ffa) => { return (ffa == to); }) != null)
 				{
 					result.Add(i);
 				}

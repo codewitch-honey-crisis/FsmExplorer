@@ -137,13 +137,7 @@ namespace F
 			foreach (var ffa in closure)
 			{
 				var isfrom = null!=fromStates && FillEpsilonClosure(fromStates,null).Contains(ffa);
-				if (!finals.Contains(ffa))
-				{
-					if (ffa.IsAccepting)
-						accepting.Add(ffa);
-					else if (ffa.IsNeutral)
-						neutrals.Add(ffa);
-				}
+				
 				var rngGrps = ffa.FillInputTransitionRangesGroupedByState();
 				foreach (var rngGrp in rngGrps)
 				{
@@ -299,9 +293,9 @@ namespace F
 				writer.Write("</TABLE>");
 				writer.Write(">");
 				bool isfinal = false;
-				if (accepting.Contains(ffa) || (isfinal = finals.Contains(ffa)))
+				if (accepting.Contains(ffa))
 					writer.Write(",shape=doublecircle");
-				if (isfinal || neutrals.Contains(ffa))
+				else if (isfinal || neutrals.Contains(ffa))
 				{
 					if ((null == fromStates || !fromStates.Contains(ffa)) &&
 						(null == toStates || !toStates.Contains(ffa)))
@@ -353,7 +347,7 @@ namespace F
 					writer.Write(closure.IndexOf(ntfa));
 					delim = ",";
 				}
-				writer.WriteLine(" [shape=doublecircle,color=gray]");
+				writer.WriteLine(" [shape=circle,color=gray]");
 			}
 
 			writer.WriteLine("}");

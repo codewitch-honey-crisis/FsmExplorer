@@ -13,5 +13,5 @@ q1 [label=<<TABLE BORDER="0"><TR><TD>q<SUB>1</SUB></TD></TR></TABLE>>]
 q2 [label=<<TABLE BORDER="0"><TR><TD>q<SUB>2</SUB></TD></TR><TR><TD>accept</TD></TR></TABLE>>,shape=doublecircle]
 q3 [label=<<TABLE BORDER="0"><TR><TD>q<SUB>3</SUB></TD></TR><TR><TD>accept</TD></TR></TABLE>>,shape=doublecircle]
 q4 [label=<<TABLE BORDER="0"><TR><TD>q<SUB>4</SUB></TD></TR><TR><TD>accept</TD></TR></TABLE>>,shape=doublecircle]
-q2,q3,q4,q2,q3,q4 [shape=doublecircle]
+q2,q3,q4 [shape=doublecircle]
 }

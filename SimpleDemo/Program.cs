@@ -10,6 +10,9 @@ namespace SimpleDemo {
 			var ast = RegexExpression.Parse(exp);
 			ast.Visit((RegexExpression expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
 			var nfa = ast.ToFA(0,false);
+			nfa.SetIds();
+			var cloned = nfa.ClonePathTo(nfa.FindFirst((fa) => { return fa.Id == 12; }));
+			cloned.RenderToFile(@"..\..\..\cloned_nfa.jpg");
 			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
 			// show accept symbols
@@ -18,8 +21,7 @@ namespace SimpleDemo {
 			opts.AcceptSymbolNames = new string[] { "accept" };
 			// uncomment to hide expanded epsilons
 			//nfa.Compact();
-			// used for debugging
-			nfa.SetIds();
+			
 			var array = nfa.ToArray();
 			Console.WriteLine("NFA table length is {0} entries.",array.Length);
 			nfa = FA.FromArray(array);
