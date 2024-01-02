@@ -5,6 +5,11 @@ using System.Text;
 using LC;
 namespace F
 {
+#if FALIB
+	public
+#endif
+	delegate bool RegexVisitAction(RegexExpression expression);
+
 	/// <summary>
 	/// Represents the common functionality of all regular expression elements
 	/// </summary>
@@ -44,6 +49,34 @@ namespace F
 			Line = line;
 			Column = column;
 			Position = position;
+		}
+		public bool Visit(RegexVisitAction action)
+		{
+			if (action(this))
+			{
+				var unary = this as RegexUnaryExpression;
+				if (unary != null && unary.Expression != null)
+				{
+					return unary.Expression.Visit(action);
+				}
+				var binary = this as RegexBinaryExpression;
+				if (binary != null)
+				{
+					if (binary.Left != null)
+					{
+						if (!binary.Left.Visit(action))
+						{
+							return false;
+						}
+					}
+					if (binary.Right != null)
+					{
+						return binary.Right.Visit(action);
+					}
+				}
+				return true;
+			}
+			return false;
 		}
 		/// <summary>
 		/// Creates a copy of the expression
