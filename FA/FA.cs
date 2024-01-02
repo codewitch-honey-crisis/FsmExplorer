@@ -311,7 +311,7 @@ namespace F
    			}
    			return nclosure[0];
    		}
-		public int[] MarkPathTo(FA to)
+		public int[] PathToIndices(FA to)
 		{
 			var closure = FillClosure();
 			var result = new List<int>(closure.Count);
@@ -366,7 +366,7 @@ namespace F
 			{
 				item.Value.Sort((x, y) => { var c = x.Key.CompareTo(y.Key); if (0 != c) return c; return x.Value.CompareTo(y.Value); });
 				_NormalizeSortedRangeList(item.Value);
-				result.Add(item.Key, _FromPairs(item.Value));
+				result.Add(item.Key, FromPairs(item.Value));
 			}
 			return result;
 		}
@@ -805,34 +805,34 @@ namespace F
 								}
 								if (isNot)
 								{
-									next = FA.Set(_ToPairs(CharacterClasses.UnicodeCategories[uci]), accept, compact);
+									next = FA.Set(ToPairs(CharacterClasses.UnicodeCategories[uci]), accept, compact);
 								}
 								else
-									next = FA.Set(_ToPairs(CharacterClasses.NotUnicodeCategories[uci]), accept, compact);
+									next = FA.Set(ToPairs(CharacterClasses.NotUnicodeCategories[uci]), accept, compact);
 								break;
 							case 'd':
-								next = FA.Set(_ToPairs(CharacterClasses.digit), accept,compact);
+								next = FA.Set(ToPairs(CharacterClasses.digit), accept,compact);
 								pc.Advance();
 								break;
 							case 'D':
-								next = FA.Set(_NotRanges(CharacterClasses.digit), accept,compact);
+								next = FA.Set(NotRanges(CharacterClasses.digit), accept,compact);
 								pc.Advance();
 								break;
 
 							case 's':
-								next = FA.Set(_ToPairs(CharacterClasses.space), accept,compact);
+								next = FA.Set(ToPairs(CharacterClasses.space), accept,compact);
 								pc.Advance();
 								break;
 							case 'S':
-								next = FA.Set(_NotRanges(CharacterClasses.space), accept,compact);
+								next = FA.Set(NotRanges(CharacterClasses.space), accept,compact);
 								pc.Advance();
 								break;
 							case 'w':
-								next = FA.Set(_ToPairs(CharacterClasses.word), accept,compact);
+								next = FA.Set(ToPairs(CharacterClasses.word), accept,compact);
 								pc.Advance();
 								break;
 							case 'W':
-								next = FA.Set(_NotRanges(CharacterClasses.word), accept,compact);
+								next = FA.Set(NotRanges(CharacterClasses.word), accept,compact);
 								pc.Advance();
 								break;
 							default:
@@ -888,9 +888,9 @@ namespace F
 						var seti = _ParseSet(pc);
 						IEnumerable<KeyValuePair<int, int>> set;
 						if (seti.Key)
-							set = _NotRanges(seti.Value);
+							set = NotRanges(seti.Value);
 						else
-							set = _ToPairs(seti.Value);
+							set = ToPairs(seti.Value);
 						next = FA.Set(set, accept);
 						next = _ParseModifier(next, pc, accept, compact);
 
@@ -1275,7 +1275,7 @@ namespace F
 					return (char)i;
 			}
 		}
-		static KeyValuePair<int, int>[] _ToPairs(int[] packedRanges)
+		static internal KeyValuePair<int, int>[] ToPairs(int[] packedRanges)
 		{
 			var result = new KeyValuePair<int, int>[packedRanges.Length / 2];
 			for (var i = 0; i < result.Length; ++i)
@@ -1285,7 +1285,7 @@ namespace F
 			}
 			return result;
 		}
-		static int[] _FromPairs(IList<KeyValuePair<int, int>> pairs)
+		static internal int[] FromPairs(IList<KeyValuePair<int, int>> pairs)
 		{
 			var result = new int[pairs.Count * 2];
 			for (int ic = pairs.Count, i = 0; i < ic; ++i)
@@ -1297,11 +1297,11 @@ namespace F
 			}
 			return result;
 		}
-		static IList<KeyValuePair<int, int>> _NotRanges(int[] ranges)
+		static internal IList<KeyValuePair<int, int>> NotRanges(int[] ranges)
 		{
-			return new List<KeyValuePair<int, int>>(_NotRanges(_ToPairs(ranges)));
+			return new List<KeyValuePair<int, int>>(NotRanges(ToPairs(ranges)));
 		}
-		static IEnumerable<KeyValuePair<int, int>> _NotRanges(IEnumerable<KeyValuePair<int, int>> ranges)
+		static internal IEnumerable<KeyValuePair<int, int>> NotRanges(IEnumerable<KeyValuePair<int, int>> ranges)
 		{
 			// expects ranges to be normalized
 			var last = 0x10ffff;

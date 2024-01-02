@@ -6,9 +6,11 @@ namespace SimpleDemo {
 		static void Main(string[] args) {
 			// our expression
 			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
-			Console.WriteLine(exp);
 			// parse it
-			var nfa = FA.Parse(exp, 0, false);
+			var ast = RegexExpression.Parse(exp);
+			Console.WriteLine(ast);
+
+			var nfa = ast.ToFA(0);
 			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
 			// don't need to see accept symbol ids
