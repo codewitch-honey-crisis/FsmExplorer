@@ -93,11 +93,11 @@ namespace F
 #endif
 	partial class FA
 	{
-		public bool IsDeterministic = true;
-		public int AcceptSymbol = -1;
-		public int Tag = 0;
-		public FA[] FromStates = null;
-		public int Id = -1;
+		public bool IsDeterministic { get; set; } = true;
+		public int AcceptSymbol { get; set; } = -1;
+		public int Tag { get; set; } = 0;
+		public FA[] FromStates { get; set; } = null;
+		public int Id { get; set; } = -1;
 		public static readonly FAFindFilter AcceptingFilter = new FAFindFilter((FA state)=>{ return state.IsAccepting; });
 		public static readonly FAFindFilter FinalFilter = new FAFindFilter((FA state) => { return state.IsFinal; });
 		public readonly List<FATransition> Transitions = new List<FATransition>();
@@ -108,7 +108,7 @@ namespace F
 		public FA() { }
 		public bool IsAccepting {
 			get {
-				return AcceptSymbol != -1;
+				return AcceptSymbol > -1;
 			}
 		}
 		public bool IsFinal { get { return 0 == Transitions.Count; } }
@@ -342,12 +342,12 @@ namespace F
 			}
 			return result;
 		}
-		public IDictionary<FA, int[]> FillInputTransitionRangesGroupedByState(IDictionary<FA, int[]> result = null)
+		public IDictionary<FA, int[]> FillInputTransitionRangesGroupedByState(bool includeEpsilons = false, IDictionary<FA, int[]> result = null)
 		{
 			var working = new Dictionary<FA, List<KeyValuePair<int, int>>>();
 			foreach (var trns in Transitions)
 			{
-				if (trns.Min == -1 && trns.Max == -1)
+				if (!includeEpsilons && (trns.Min == -1 && trns.Max == -1))
 				{
 					continue;
 				}
@@ -1708,25 +1708,23 @@ namespace F
 				return new _FListNode(q, this);
 			}
 		}
-		public int[] ToDfaTable(IProgress<int> progress = null) {
-			FA fa = this;
-			if(!IsDeterministic)
-			{
-				fa = this.ToDfa(progress);
-			}
+		public int[] ToTable(IProgress<int> progress = null)
+		{
 			var working = new List<int>();
-			var closure = new List<F.FA>();
-			fa.FillClosure(closure);
+			var closure = new List<FA>();
+			FillClosure(closure);
 			var stateIndices = new int[closure.Count];
-			for (var i = 0; i < closure.Count; ++i) {
+			for (var i = 0; i < closure.Count; ++i)
+			{
 				var cfa = closure[i];
 				stateIndices[i] = working.Count;
 				// add the accept
 				working.Add(cfa.IsAccepting ? cfa.AcceptSymbol : -1);
-				var itrgp = cfa.FillInputTransitionRangesGroupedByState();
+				var itrgp = cfa.FillInputTransitionRangesGroupedByState(true);
 				// add the number of transitions
 				working.Add(itrgp.Count);
-				foreach (var itr in itrgp) {
+				foreach (var itr in itrgp)
+				{
 					// We have to fill in the following after the fact
 					// We don't have enough info here
 					// for now just drop the state index as a placeholder
@@ -1740,10 +1738,12 @@ namespace F
 			}
 			var result = working.ToArray();
 			var state = 0;
-			while (state < result.Length) {
+			while (state < result.Length)
+			{
 				state++;
 				var tlen = result[state++];
-				for (var i = 0; i < tlen; ++i) {
+				for (var i = 0; i < tlen; ++i)
+				{
 					// patch the destination
 					result[state] = stateIndices[result[state]];
 					++state;
@@ -1753,36 +1753,42 @@ namespace F
 			}
 			return result;
 		}
-		public static FA FromDfaTable(int[] dfa) {
-			if (null == dfa) return null;
-			if(dfa.Length == 0) return new FA();
+		public static FA FromTable(int[] fa)
+		{
+			if (null == fa) return null;
+			if (fa.Length == 0) return new FA();
 			var si = 0;
 			var states = new Dictionary<int, FA>();
-			while (si<dfa.Length) {
-				var fa = new FA();
-				states.Add(si, fa);
-				fa.AcceptSymbol = dfa[si++];
-				var tlen = dfa[si++];
-				for(var i = 0;i<tlen;++i) {
+			while (si < fa.Length)
+			{
+				var newfa = new FA();
+				states.Add(si, newfa);
+				newfa.AcceptSymbol = fa[si++];
+				var tlen = fa[si++];
+				for (var i = 0; i < tlen; ++i)
+				{
 					++si; // tto
-					var prlen = dfa[si++];
+					var prlen = fa[si++];
 					si += prlen * 2;
-                }
+				}
 			}
 			si = 0;
 			var sid = 0;
-			while (si < dfa.Length) {
-				var fa = states[si];
-				var acc = dfa[si++];
-				var tlen = dfa[si++];
-				for (var i = 0; i < tlen; ++i) {
-					var tto = dfa[si++];
+			while (si < fa.Length)
+			{
+				var newfa = states[si];
+				var acc = fa[si++];
+				var tlen = fa[si++];
+				for (var i = 0; i < tlen; ++i)
+				{
+					var tto = fa[si++];
 					var to = states[tto];
-					var prlen = dfa[si++];
-					for(var j=0;j<prlen;++j) {
-						var pmin = dfa[si++];
-						var pmax = dfa[si++];
-						fa.Transitions.Add(new FATransition(pmin, pmax, to));
+					var prlen = fa[si++];
+					for (var j = 0; j < prlen; ++j)
+					{
+						var pmin = fa[si++];
+						var pmax = fa[si++];
+						newfa.Transitions.Add(new FATransition(pmin, pmax, to));
 					}
 				}
 				++sid;
@@ -1869,10 +1875,10 @@ namespace F
 			Array.Sort(points);
 			++prog;
 			if (progress != null) { progress.Report(prog); }
-			var sets = new Dictionary<KeySet<FA>, KeySet<FA>>();
-			var working = new Queue<KeySet<FA>>();
-			var dfaMap = new Dictionary<KeySet<FA>, FA>();
-			var initial = new KeySet<FA>();
+			var sets = new Dictionary<_KeySet<FA>, _KeySet<FA>>();
+			var working = new Queue<_KeySet<FA>>();
+			var dfaMap = new Dictionary<_KeySet<FA>, FA>();
+			var initial = new _KeySet<FA>();
 			var epscl = new List<FA>();
 			fa.FillEpsilonClosure(epscl);
 			foreach (var efa in epscl)
@@ -1912,7 +1918,7 @@ namespace F
 				for (var i = 0; i < points.Length; i++)
 				{
 					var pnt = points[i];
-					var set = new KeySet<FA>();
+					var set = new _KeySet<FA>();
 					foreach (FA c in s)
 					{
 						var ecs = c.FillEpsilonClosure();
@@ -2457,16 +2463,16 @@ namespace F
 				yield return ch;
 			}
 		}
-		sealed class KeySet<T> : ISet<T>, IEquatable<KeySet<T>>
+		sealed class _KeySet<T> : ISet<T>, IEquatable<_KeySet<T>>
 		{
 			HashSet<T> _inner;
 			int _hashCode;
-			public KeySet(IEqualityComparer<T> comparer)
+			public _KeySet(IEqualityComparer<T> comparer)
 			{
 				_inner = new HashSet<T>(comparer);
 				_hashCode = 0;
 			}
-			public KeySet()
+			public _KeySet()
 			{
 				_inner = new HashSet<T>();
 				_hashCode = 0;
@@ -2576,7 +2582,7 @@ namespace F
 			{
 				throw new NotSupportedException("The set is read only");
 			}
-			public bool Equals(KeySet<T> rhs)
+			public bool Equals(_KeySet<T> rhs)
 			{
 				if (ReferenceEquals(this, rhs))
 					return true;

@@ -5,25 +5,26 @@ namespace SimpleDemo {
     class Program {
 		static void Main(string[] args) {
 			// our expression
-			var exp = @"a(b*)";
+			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
 			Console.WriteLine(exp);
 			// parse it
 			var nfa = FA.Parse(exp, 0, false);
-			Console.WriteLine("foo is match: {0}", nfa.IsMatch("-10"));
+			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
 			// don't need to see accept symbol ids
 			opts.HideAcceptSymbolIds = false;
 			opts.AcceptSymbolNames = new string[] { "Accept" };
 			// uncomment to show expanded epsilons
-			nfa.Compact();
+			//nfa.Compact();
 			// used for debugging
 			nfa.SetIds();
+			nfa = FA.FromTable(nfa.ToTable());
 			nfa.RenderToFile(@"..\..\..\ident_or_num_nfa.jpg",opts);
 			var dfa = nfa.ToDfa();
 			
 			dfa.ToMinimized().RenderToFile(@"..\..\..\keyword_or_num_min.jpg",opts);
 
-
+			dfa.ToMinimized().RenderToFile(@"..\..\..\keyword_or_num_min.dot", opts);
 		}
     }
 }
