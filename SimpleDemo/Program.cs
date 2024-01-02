@@ -15,7 +15,7 @@ namespace SimpleDemo {
 			// don't need to see accept symbol ids
 			opts.HideAcceptSymbolIds = false;
 			opts.AcceptSymbolNames = new string[] { "accept" };
-			// uncomment to show expanded epsilons
+			// uncomment to hide expanded epsilons
 			//nfa.Compact();
 			// used for debugging
 			nfa.SetIds();
