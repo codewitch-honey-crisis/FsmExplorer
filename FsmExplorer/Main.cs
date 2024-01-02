@@ -31,6 +31,7 @@ namespace FsmExplorer
 			if (dfa == null)
 			{
 				dfa = nfa.ToDfa();
+				dfa.SetIds();
 			}
 			if (NfaDfa.Checked)
 			{
@@ -42,6 +43,7 @@ namespace FsmExplorer
 				if(dfa_min == null)
 				{
 					dfa_min = dfa.ToMinimized();
+					dfa_min.SetIds();
 				}
 				fa = dfa_min;
 			}
@@ -62,6 +64,7 @@ namespace FsmExplorer
 			try
 			{
 				nfa = FA.Parse(Regex.Text,0,false);
+				nfa.SetIds();
 				dfa = null;
 				dfa_min = null;
 			}

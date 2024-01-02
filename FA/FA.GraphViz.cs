@@ -93,12 +93,24 @@ namespace F
 				writer.WriteLine("rankdir=LR");
 			}
 			writer.WriteLine("node [shape=circle]");
+			var accepting = new List<FA>();
 			var finals = new List<FA>();
 			var neutrals = new List<FA>();
-			var accepting = FillAcceptingStates(closure, null);
 			foreach (var ffa in closure)
-				if (ffa.IsFinal && !ffa.IsAccepting)
+			{
+				if (ffa.IsAccepting)
+				{
+					accepting.Add(ffa);
+				}
+				else if (ffa.IsNeutral)
+				{
+					neutrals.Add(ffa);
+				}
+				else if (ffa.IsFinal)
+				{
 					finals.Add(ffa);
+				}
+			}
 
 			IList<FA> fromStates = null;
 			IList<FA> toStates = null;
@@ -114,16 +126,17 @@ namespace F
 						fromStates = closure[0].FillEpsilonClosure();
 					} else
 					{
-						fromStates = FillEpsilonClosure(toStates,null);
+						fromStates = toStates;
 					}
 					tchar = ch;
 					toStates = FillMove(fromStates, ch);
+
 					if (0 == toStates.Count)
 						break;
 				}
 			}
-			if(fromStates==null)
-			{
+			if(fromStates==null) 
+			{ 
 				fromStates = closure[0].FillEpsilonClosure();
 			}
 			if (null != toStates)
@@ -177,7 +190,7 @@ namespace F
 				{
 					if (fat.Min == -1 && fat.Max == -1)
 					{
-						var istrns = isfrom && null != toStates && options.DebugString != null && toStates.Contains(fat.To);
+						var istrns = null != toStates && options.DebugString != null && toStates.Contains(ffa) && toStates.Contains(fat.To);
 						writer.Write(pfx + spfx);
 						writer.Write(i);
 						writer.Write("->");

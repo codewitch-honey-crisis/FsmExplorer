@@ -99,6 +99,7 @@ namespace F
 		public int Id { get; set; } = -1;
 		public static readonly FAFindFilter AcceptingFilter = new FAFindFilter((FA state)=>{ return state.IsAccepting; });
 		public static readonly FAFindFilter FinalFilter = new FAFindFilter((FA state) => { return state.IsFinal; });
+		public static readonly FAFindFilter NeutralFilter = new FAFindFilter((FA state) => { return state.IsNeutral; });
 		public readonly List<FATransition> Transitions = new List<FATransition>();
 		public FA(int acceptSymbol)
 		{
@@ -1985,10 +1986,11 @@ namespace F
 				for (int i = 0; i < state.Transitions.Count; ++i)
 				{
 					var fat = state.Transitions[i];
-					if(fat.Min==-1 && fat.Max==-1)
+					if(fat.Min == -1 && fat.Max == -1)
 					{
 						continue;
-					} else if(fat.Min<=codepoint && codepoint<=fat.Max)
+					}
+					if(fat.Min<=codepoint && codepoint<=fat.Max)
 					{
 						if (!result.Contains(fat.To))
 						{
