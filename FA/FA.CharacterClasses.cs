@@ -9,8 +9,8 @@
 //------------------------------------------------------------------------------
 
 namespace F {
-    
-    public partial class FA {
+
+	partial class FA {
         public partial class CharacterClasses {
             public static int[][] UnicodeCategories = new int[][] {
                     new int[] {
