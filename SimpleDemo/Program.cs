@@ -8,8 +8,7 @@ namespace SimpleDemo {
 			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
 			// parse it
 			var ast = RegexExpression.Parse(exp);
-			Console.WriteLine(ast);
-
+			ast.Visit((RegexExpression expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
 			var nfa = ast.ToFA(0,false);
 			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
