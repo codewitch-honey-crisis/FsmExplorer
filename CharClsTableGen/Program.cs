@@ -17,8 +17,13 @@ namespace LexTableGen
 				var ccu = new CodeCompileUnit();
 				var ns = new CodeNamespace("F");
 				ccu.Namespaces.Add(ns);
+				var otd = CU.Class("FA");
+				otd.IsPartial = true;
+				otd.TypeAttributes = System.Reflection.TypeAttributes.Public;
 				var td = CU.Class("CharacterClasses");
-				ns.Types.Add(td);
+				otd.Members.Add(td);
+				otd.Attributes = MemberAttributes.Public;
+				ns.Types.Add(otd);
 				td.TypeAttributes = System.Reflection.TypeAttributes.Public;
 				td.IsPartial = true;
 				var uc = new List<int>[30];

@@ -1587,7 +1587,7 @@ namespace F
 				var crcl = entry as RegexCharsetClassEntry;
 				if (null != crcl)
 				{
-					var known = CharacterClasses.Known[crcl.Name];
+					var known = FA.CharacterClasses.Known[crcl.Name];
 					for (int j = 0; j < known.Length; j += 2)
 					{
 						ranges.Add(new KeyValuePair<int, int>(known[j], known[j + 1]));
