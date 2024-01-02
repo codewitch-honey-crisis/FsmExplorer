@@ -200,7 +200,7 @@ namespace F
 							default:
 								if (-1 != (ich = _ParseEscapePart(pc)))
 								{
-									next = new RegexLiteralExpression((char)ich);
+									next = new RegexLiteralExpression(ich);
 								}
 								else
 								{
@@ -293,7 +293,7 @@ namespace F
 						break;
 					default:
 						ich = pc.Current;
-						next = new RegexLiteralExpression((char)ich);
+						next = new RegexLiteralExpression(ich);
 						next.SetLocation(line, column, position);
 						pc.Advance();
 						next = _ParseModifier(next, pc);
@@ -811,39 +811,39 @@ namespace F
 						return 'x';
 					byte b = _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
-					return unchecked((char)b);
+					return unchecked(b);
 				case 'u':
 					if (-1 == pc.Advance())
 						return 'u';
 					ushort u = _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
-					return unchecked((char)u);
+					return unchecked(u);
 				default:
 					int i = pc.Current;
 					pc.Advance();
-					return (char)i;
+					return i;
 			}
 		}
 		static int _ParseRangeEscapePart(LexContext pc)
@@ -872,39 +872,39 @@ namespace F
 						return 'x';
 					byte b = _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
 					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
-						return unchecked((char)b);
+						return unchecked(b);
 					b <<= 4;
 					b |= _FromHexChar(pc.Current);
-					return unchecked((char)b);
+					return unchecked(b);
 				case 'u':
 					if (-1 == pc.Advance())
 						return 'u';
 					ushort u = _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
+						return unchecked(u);
 					u |= _FromHexChar(pc.Current);
-					return unchecked((char)u);
+					return unchecked(u);
 				default:
 					int i = pc.Current;
 					pc.Advance();
-					return (char)i;
+					return i;
 			}
 		}
 		static int _ReadRangeChar(IEnumerator<int> e)
