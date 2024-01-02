@@ -8,7 +8,7 @@ namespace SimpleDemo {
 			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
 			// parse it
 			var ast = RegexExpression.Parse(exp);
-			ast.Visit((RegexExpression expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
+			ast.Visit((parent, expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
 			var nfa = ast.ToFA(0,false);
 			nfa.SetIds();
 			var cloned = nfa.ClonePathTo(nfa.FindFirst((fa) => { return fa.Id == 12; }));

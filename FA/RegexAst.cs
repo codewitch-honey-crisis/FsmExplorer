@@ -8,7 +8,7 @@ namespace F
 #if FALIB
 	public
 #endif
-	delegate bool RegexVisitAction(RegexExpression expression);
+	delegate bool RegexVisitAction(RegexExpression parent, RegexExpression expression);
 
 	/// <summary>
 	/// Represents the common functionality of all regular expression elements
@@ -50,33 +50,36 @@ namespace F
 			Column = column;
 			Position = position;
 		}
-		public bool Visit(RegexVisitAction action)
-		{
-			if (action(this))
+		bool _Visit(RegexExpression parent, RegexVisitAction action) {
+			if (action(parent,this))
 			{
 				var unary = this as RegexUnaryExpression;
 				if (unary != null && unary.Expression != null)
 				{
-					return unary.Expression.Visit(action);
+					return unary.Expression._Visit(this,action);
 				}
 				var binary = this as RegexBinaryExpression;
 				if (binary != null)
 				{
 					if (binary.Left != null)
 					{
-						if (!binary.Left.Visit(action))
+						if (!binary.Left._Visit(this,action))
 						{
 							return false;
 						}
 					}
 					if (binary.Right != null)
 					{
-						return binary.Right.Visit(action);
+						return binary.Right._Visit(this,action);
 					}
 				}
 				return true;
 			}
 			return false;
+		}
+		public void Visit(RegexVisitAction action)
+		{
+			_Visit(null, action);
 		}
 		/// <summary>
 		/// Creates a copy of the expression
