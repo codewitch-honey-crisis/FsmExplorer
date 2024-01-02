@@ -20,15 +20,15 @@ namespace SimpleDemo {
 			//nfa.Compact();
 			// used for debugging
 			nfa.SetIds();
-			var table = nfa.ToTable();
-			Console.WriteLine("NFA table length is {0} entries.",table.Length);
-			nfa = FA.FromTable(table);
+			var array = nfa.ToArray();
+			Console.WriteLine("NFA table length is {0} entries.",array.Length);
+			nfa = FA.FromArray(array);
 			nfa.RenderToFile(@"..\..\..\expression_nfa.jpg",opts);
 			nfa.RenderToFile(@"..\..\..\expression_nfa.dot", opts);
 			var dfa = nfa.ToDfa();
 			var mdfa = dfa.ToMinimized();
-			table = mdfa.ToTable();
-			Console.WriteLine("Min DFA table length is {0} entries.", table.Length);
+			array = mdfa.ToArray();
+			Console.WriteLine("Min DFA table length is {0} entries.", array.Length);
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.jpg",opts);
 
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.dot", opts);

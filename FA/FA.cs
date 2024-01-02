@@ -1706,7 +1706,7 @@ namespace F
 				return new _FListNode(q, this);
 			}
 		}
-		public int[] ToTable()
+		public int[] ToArray()
 		{
 			var working = new List<int>();
 			var closure = new List<FA>();
@@ -1751,7 +1751,7 @@ namespace F
 			}
 			return result;
 		}
-		public static FA FromTable(int[] fa)
+		public static FA FromArray(int[] fa)
 		{
 			if (null == fa) return null;
 			if (fa.Length == 0) return new FA();
