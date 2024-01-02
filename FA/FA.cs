@@ -91,6 +91,7 @@ namespace F
 #endif
 	partial class FA
 	{
+		public bool IsCompact { get; set; } = true;
 		public bool IsDeterministic { get; set; } = true;
 		public int AcceptSymbol { get; set; } = -1;
 		public int Tag { get; set; } = 0;
@@ -157,6 +158,7 @@ namespace F
 			fat.Max = -1;
 			fat.To = to;
 			Transitions.Add(fat);
+			IsCompact = false;
 		}
 		public void SetIds()
 		{
@@ -255,6 +257,11 @@ namespace F
 		{
 			if (null == result)
 				result = new List<FA>();
+			if (result.Contains(this))
+			{
+				return result;
+			}
+						
 			if (result.Contains(this))
 				return result;
 			result.Add(this);
@@ -2124,6 +2131,7 @@ namespace F
 			for(int i = 0; i < closure.Count;++i)
 			{
 				var fa = closure[i];
+				if(fa.IsCompact) { continue; }
 				var efas = fa.FillEpsilonClosure();
 				var trans = new List<FATransition>();
 				foreach(var efa in efas)
@@ -2143,6 +2151,7 @@ namespace F
 				}
 				fa.Transitions.Clear();
 				fa.Transitions.AddRange(trans);
+				fa.IsCompact = true;
 			}
 		}
 		public void Compact()
