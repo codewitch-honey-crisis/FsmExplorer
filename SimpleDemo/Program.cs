@@ -12,8 +12,9 @@ namespace SimpleDemo {
 			var nfa = ast.ToFA(0,false);
 			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
 			var opts = new FADotGraphOptions();
-			// don't need to see accept symbol ids
+			// show accept symbols
 			opts.HideAcceptSymbolIds = false;
+			// map symbol ids to names
 			opts.AcceptSymbolNames = new string[] { "accept" };
 			// uncomment to hide expanded epsilons
 			//nfa.Compact();
