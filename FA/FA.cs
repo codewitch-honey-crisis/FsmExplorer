@@ -704,7 +704,7 @@ namespace F
 								int uco = pc.Column;
 								long upo = pc.Position;
 								while (-1 != pc.Advance() && '}' != pc.Current)
-									uc.Append((char)pc.Current);
+									uc.Append(char.ConvertFromUtf32(pc.Current));
 								pc.Expecting('}');
 								pc.Advance();
 								int uci = 0;
@@ -902,12 +902,6 @@ namespace F
 						break;
 					default:
 						ich = pc.Current;
-						if (char.IsHighSurrogate((char)ich))
-						{
-							if (-1 == pc.Advance())
-								throw new ExpectingException("Expecting low surrogate in Unicode stream", pc.Line, pc.Column, pc.Position, pc.FileOrUrl, "low-surrogate");
-							ich = char.ConvertToUtf32((char)ich, (char)pc.Current);
-						}
 						next = FA.Literal(new int[] { ich }, accept,compact);
 						pc.Advance();
 						next = _ParseModifier(next, pc, accept,compact);
@@ -980,16 +974,7 @@ namespace F
 					}
 					if (!readFirstChar)
 					{
-						if (char.IsHighSurrogate((char)pc.Current))
-						{
-							var chh = (char)pc.Current;
-							pc.Advance();
-							pc.Expecting();
-							firstChar = char.ConvertToUtf32(chh, (char)pc.Current);
-							pc.Advance();
-							pc.Expecting();
-						}
-						else if ('\\' == pc.Current)
+						if ('\\' == pc.Current)
 						{
 							pc.Advance();
 							firstChar = _ParseRangeEscapePart(pc);
@@ -1024,16 +1009,7 @@ namespace F
 				{
 					if ('\\' != pc.Current)
 					{
-						var ch = 0;
-						if (char.IsHighSurrogate((char)pc.Current))
-						{
-							var chh = (char)pc.Current;
-							pc.Advance();
-							pc.Expecting();
-							ch = char.ConvertToUtf32(chh, (char)pc.Current);
-						}
-						else
-							ch = (char)pc.Current;
+						var ch = pc.Current;
 						pc.Advance();
 						pc.Expecting();
 						result.Add(firstChar);
@@ -1118,7 +1094,7 @@ namespace F
 			}
 			return expr;
 		}
-		static byte _FromHexChar(char hex)
+		static byte _FromHexChar(int hex)
 		{
 			if (':' > hex && '/' < hex)
 				return (byte)(hex - '0');
@@ -1128,7 +1104,7 @@ namespace F
 				return (byte)(hex - 'W'); // 'a'-10
 			throw new ArgumentException("The value was not hex.", "hex");
 		}
-		static bool _IsHexChar(char hex)
+		static bool _IsHexChar(int hex)
 		{
 			if (':' > hex && '/' < hex)
 				return true;
@@ -1160,48 +1136,43 @@ namespace F
 					pc.Advance();
 					return '\r';
 				case 'x':
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
 						return 'x';
-					byte b = _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					byte b = _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					return unchecked(b);
 				case 'u':
 					if (-1 == pc.Advance())
 						return 'u';
-					ushort u = _FromHexChar((char)pc.Current);
+					ushort u = _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
-					return unchecked((char)u);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
+					return unchecked(u);
 				default:
 					int i = pc.Current;
 					pc.Advance();
-					if (char.IsHighSurrogate((char)i))
-					{
-						i = char.ConvertToUtf32((char)i, (char)pc.Current);
-						pc.Advance();
-					}
-					return (char)i;
+					return i;
 			}
 		}
 		static int _ParseRangeEscapePart(LexContext pc)
@@ -1229,48 +1200,43 @@ namespace F
 					pc.Advance();
 					return '\r';
 				case 'x':
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
 						return 'x';
-					byte b = _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					byte b = _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					if (-1 == pc.Advance() || !_IsHexChar((char)pc.Current))
-						return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					if (-1 == pc.Advance() || !_IsHexChar(pc.Current))
+						return unchecked(b);
 					b <<= 4;
-					b |= _FromHexChar((char)pc.Current);
-					return unchecked((char)b);
+					b |= _FromHexChar(pc.Current);
+					return unchecked(b);
 				case 'u':
 					if (-1 == pc.Advance())
 						return 'u';
-					ushort u = _FromHexChar((char)pc.Current);
+					ushort u = _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
 					u <<= 4;
 					if (-1 == pc.Advance())
-						return unchecked((char)u);
-					u |= _FromHexChar((char)pc.Current);
-					return unchecked((char)u);
+						return unchecked(u);
+					u |= _FromHexChar(pc.Current);
+					return unchecked(u);
 				default:
 					int i = pc.Current;
 					pc.Advance();
-					if (char.IsHighSurrogate((char)i))
-					{
-						i = char.ConvertToUtf32((char)i, (char)pc.Current);
-						pc.Advance();
-					}
-					return (char)i;
+					return i;
 			}
 		}
 		static internal KeyValuePair<int, int>[] ToPairs(int[] packedRanges)
