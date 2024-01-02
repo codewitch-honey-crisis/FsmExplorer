@@ -203,7 +203,18 @@ namespace F
 							default:
 								if (-1 != (ich = _ParseEscapePart(pc)))
 								{
-									next = new RegexLiteralExpression(ich);
+									if (result is RegexLiteralExpression)
+									{
+										var cptmp = new int[((RegexLiteralExpression)result).Codepoints.Length + 1];
+										cptmp[cptmp.Length - 1] = ich;
+										Array.Copy(((RegexLiteralExpression)result).Codepoints, cptmp, cptmp.Length - 1);
+										((RegexLiteralExpression)result).Codepoints = cptmp;
+										next = null;
+									}
+									else
+									{
+										next = new RegexLiteralExpression(new int[] { ich });
+									}
 								}
 								else
 								{
@@ -212,8 +223,11 @@ namespace F
 								}
 								break;
 						}
-						next.SetLocation(line, column, position);
-						next = _ParseModifier(next, pc);
+						if (next != null)
+						{
+							next.SetLocation(line, column, position);
+							next = _ParseModifier(next, pc);
+						}
 						if (null != result)
 						{
 							result = new RegexConcatExpression(result, next);
@@ -275,8 +289,7 @@ namespace F
 							pc.Expecting();
 						}
 						var ranges = _ParseRanges(pc);
-						if (ranges.Count==0)
-							System.Diagnostics.Debugger.Break();
+						
 						pc.Expecting(']');
 						pc.Advance();
 						next = new RegexCharsetExpression(ranges, not);
@@ -296,15 +309,32 @@ namespace F
 						break;
 					default:
 						ich = pc.Current;
-						next = new RegexLiteralExpression(ich);
-						next.SetLocation(line, column, position);
+						if (result is RegexLiteralExpression)
+						{
+							var cptmp = new int[((RegexLiteralExpression)result).Codepoints.Length + 1];
+							cptmp[cptmp.Length - 1] = ich;
+							Array.Copy(((RegexLiteralExpression)result).Codepoints, cptmp, cptmp.Length - 1);
+							((RegexLiteralExpression)result).Codepoints = cptmp;
+							next = null;
+						}
+						else
+						{
+							next = new RegexLiteralExpression(new int[] { ich });
+							next.SetLocation(line, column, position);
+						}
 						pc.Advance();
-						next = _ParseModifier(next, pc);
+						if (next != null)
+						{
+							next = _ParseModifier(next, pc);
+						}
 						if (null == result)
 							result = next;
 						else
 						{
-							result = new RegexConcatExpression(result, next);
+							if (next != null)
+							{
+								result = new RegexConcatExpression(result, next);
+							}
 							result.SetLocation(line, column, position);
 						}
 						line = pc.Line;
@@ -1062,56 +1092,57 @@ namespace F
 		/// Indicates whether or not this statement is a single element or not
 		/// </summary>
 		/// <remarks>If false, this statement will be wrapped in parentheses if necessary</remarks>
-		public override bool IsSingleElement => true;
+		public override bool IsSingleElement => Codepoints == null || Codepoints.Length < 2;
 		/// <summary>
-		/// Indicates the codepoint of this expression
+		/// Indicates the codepoints in this expression
 		/// </summary>
-		public int Codepoint { get; set; } = default(int);
+		public int[] Codepoints { get; set; } = null;
 		/// <summary>
-		/// Indicates the character literal of this expression
+		/// Indicates the string literal of this expression
 		/// </summary>
 		public string Value {
 			get {
-				return char.ConvertFromUtf32(Codepoint);
+				if(Codepoints==null)
+				{
+					return null;
+				}
+				if(Codepoints.Length==0)
+				{
+					return "";
+				}
+				var sb = new StringBuilder();
+				for(int i = 0;i<Codepoints.Length;i++)
+				{
+					sb.Append(char.ConvertFromUtf32(Codepoints[i]));
+				}
+				return sb.ToString();
 			}
 			set {
 				if (value == null) throw new NullReferenceException();
 				if (value.Length == 0 || value.Length > 2) throw new InvalidOperationException();
-				Codepoint = char.ConvertToUtf32(value, 0);
+				if (value == null)
+				{
+					Codepoints = null;
+				} else if (value.Length == 0)
+				{
+					Codepoints = new int[0];
+				} else {
+					var list = new List<int>(FA.ToUtf32(value));
+					Codepoints = list.ToArray();
+				}
 			}
 		}
 		/// <summary>
-		/// Creates a series of concatenated literals representing the specified string
+		/// Creates a literal expression with the specified codepoints
 		/// </summary>
-		/// <param name="value">The string to use</param>
-		/// <returns>An expression representing <paramref name="value"/></returns>
-		public static RegexExpression FromString(IEnumerable<char> value)
-		{
-			RegexExpression result = null; 
-			foreach (var v in FA.ToUtf32(value))
-			{
-				if (result == null)
-				{
-					result = new RegexLiteralExpression(v);
-				}
-				else
-				{
-					result = new RegexConcatExpression(result, new RegexLiteralExpression(v));
-				}
-			}
-			return result;
-		}
-		/// <summary>
-		/// Creates a literal expression with the specified character
-		/// </summary>
-		/// <param name="codepoint">The character to represent</param>
-		public RegexLiteralExpression(int codepoint) { Codepoint = codepoint; }
+		/// <param name="codepoints">The characters to represent</param>
+		public RegexLiteralExpression(int[] codepoints) { Codepoints = codepoints; }
 
 		/// <summary>
-		/// Creates a literal expression with the specified character
+		/// Creates a literal expression with the specified string
 		/// </summary>
-		/// <param name="character">The character to represent</param>
-		public RegexLiteralExpression(string character) { Value = character; }
+		/// <param name="string">The string to represent</param>
+		public RegexLiteralExpression(string @string) { Value = @string; }
 		/// <summary>
 		/// Creates a default instance of the expression
 		/// </summary>
@@ -1122,14 +1153,21 @@ namespace F
 		/// <param name="accept">The accept symbol to use for this expression</param>
 		/// <returns>A new <see cref="FA"/> finite state machine representing this expression</returns>
 		public override FA ToFA(int accept, bool compact = true)
-			=> FA.Literal(FA.ToUtf32(Value), accept, compact);
+			=> FA.Literal(Codepoints, accept, compact);
 		/// <summary>
 		/// Appends the textual representation to a <see cref="StringBuilder"/>
 		/// </summary>
 		/// <param name="sb">The string builder to use</param>
 		/// <remarks>Used by ToString()</remarks>
 		protected internal override void AppendTo(StringBuilder sb)
-			=> AppendEscapedChar(Value, sb);
+		{
+			foreach(var cp in Codepoints)
+			{
+				AppendEscapedChar(char.ConvertFromUtf32(cp), sb);
+			}
+		}
+			
+			
 		/// <summary>
 		/// Creates a new copy of this expression
 		/// </summary>
@@ -1155,7 +1193,20 @@ namespace F
 		{
 			if (ReferenceEquals(rhs, this)) return true;
 			if (ReferenceEquals(rhs, null)) return false;
-			return Value == rhs.Value;
+			if (ReferenceEquals(Codepoints, rhs.Codepoints)) return true;
+			if (ReferenceEquals(Codepoints, null) || ReferenceEquals(rhs.Codepoints, null)) return false;
+            if (Codepoints.Length!=rhs.Codepoints.Length)
+			{
+				return false;
+			}
+            for(int i = 0; i < Codepoints.Length;i++)
+			{
+				if (Codepoints[i] != rhs.Codepoints[i])
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 		/// <summary>
 		/// Indicates whether this expression is the same as the right hand expression

@@ -2172,10 +2172,10 @@ namespace F
 			return IsMatch(dfa, LexContext.Create(text));
 		}
 
-		public static FA ToLexer(IEnumerable<FA> tokens, bool dfa = true, IProgress<int> progress = null)
+		public static FA ToLexer(IEnumerable<FA> tokens, bool makeDfa = true, IProgress<int> progress = null)
 		{
 			var toks = new List<FA>(tokens);
-			if (dfa)
+			if (makeDfa)
 			{
 				for (int i = 0; i < toks.Count; i++)
 				{
@@ -2187,7 +2187,7 @@ namespace F
 			{
 				result.AddEpsilon(toks[i]);
 			}
-			if (dfa)
+			if (makeDfa)
 			{
 				return result.ToDfa(progress);
 			} else
@@ -2313,7 +2313,7 @@ namespace F
 					states.Add(this);
 					while (true)
 					{
-						states = FillEpsilonClosure(states);
+						states = FillEpsilonClosure(states,null);
 						var next = FA.FillMove(states, lc.Current);
 						if (next.Count == 0)
 						{

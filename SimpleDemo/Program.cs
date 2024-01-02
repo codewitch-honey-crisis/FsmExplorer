@@ -5,7 +5,7 @@ namespace SimpleDemo {
     class Program {
 		static void Main(string[] args) {
 			// our expression
-			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
+			var exp = @"foo|bar|[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
 			// parse it
 			var ast = RegexExpression.Parse(exp);
 			ast.Visit((parent, expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
