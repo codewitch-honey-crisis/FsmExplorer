@@ -2323,11 +2323,16 @@ namespace F
 					{
 						lc.Capture();
 						state = next;
+						lc.Advance();
 					} else
 					{
-						if(state.IsAccepting)
+						if (state.IsAccepting)
 						{
 							yield return new FAMatch(state.AcceptSymbol, lc.CaptureBuffer.ToString(), position, line, column);
+						}
+						else
+						{
+							lc.Advance();
 						}
 						lc.ClearCapture();
 						position = lc.Position;
@@ -2339,7 +2344,6 @@ namespace F
 							break;
 						}
 					}
-					lc.Advance();
 				}
 			} else
 			{
@@ -2352,14 +2356,16 @@ namespace F
 					{
 						lc.Capture();
 						states = FillEpsilonClosure(next, null);
+						lc.Advance();
 					}
 					else
 					{
 						int acc = GetFirstAcceptSymbol(states);
-						if (acc>-1) 
+						if (acc > -1)
 						{
 							yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
 						}
+						else { lc.Advance(); }
 						lc.ClearCapture();
 						position = lc.Position;
 						line = lc.Line;
@@ -2370,7 +2376,7 @@ namespace F
 							break;
 						}
 					}
-					lc.Advance();
+					
 				}
 			}
 		}
@@ -2448,12 +2454,16 @@ namespace F
 				if(moved)
 				{
 					lc.Capture();
+					lc.Advance();
 				}
 				else
 				{
 					if (acc!=-1)
 					{
 						yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
+					} else
+					{
+						lc.Advance();
 					}
 					lc.ClearCapture();
 					position = lc.Position;
@@ -2465,7 +2475,6 @@ namespace F
 						break;
 					}
 				}
-				lc.Advance();
 			}
 		}
 		/// <summary>
