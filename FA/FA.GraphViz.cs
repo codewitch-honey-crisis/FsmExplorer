@@ -31,10 +31,21 @@ namespace F
 		/// If non-null, specifies the source NFA from which this DFA was derived - used for debug view
 		/// </summary>
 		public FA DebugSourceNfa { get; set; } = null;
-
+		/// <summary>
+		/// True to show the NFA the DFA was sourced from
+		/// </summary>
 		public bool DebugShowNfa { get; set; } = false;
+		/// <summary>
+		/// True to hide the accept symbols, otherwise they will be shown on the accepting states
+		/// </summary>
 		public bool HideAcceptSymbolIds { get; set; } = false;
+		/// <summary>
+		/// Maps accept ids to names for display in the graph
+		/// </summary>
 		public string[] AcceptSymbolNames { get; set; } = null;
+		/// <summary>
+		/// True to generate vertical output. Otherwise it will be left to right.
+		/// </summary>
 		public bool Vertical { get; set; } = false;
 	}
 	partial class FA
@@ -409,6 +420,11 @@ namespace F
 			}
 
 		}
+		/// <summary>
+		/// Writes the generated dot content to the specified <see cref="TextWriter"/>
+		/// </summary>
+		/// <param name="writer">The writer</param>
+		/// <param name="options">The options</param>
 		public void WriteDotTo(TextWriter writer, FADotGraphOptions options = null)
 		{
 			if (options.DebugSourceNfa != null && options.DebugShowNfa)
