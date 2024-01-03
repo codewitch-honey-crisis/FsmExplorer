@@ -177,7 +177,7 @@ namespace F
 		/// <summary>
 		/// A value used for state minimization
 		/// </summary>
-		internal int Tag { get; set; } = 0;
+		private int Tag { get; set; } = 0;
 		/// <summary>
 		/// The list of states this state was constructed from, if applicable, otherwise null
 		/// </summary>
