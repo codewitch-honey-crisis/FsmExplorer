@@ -1710,7 +1710,7 @@ namespace F
 			var block = new int[states.Length];
 			var active = new _FList[states.Length, sigma.Length];
 			var active2 = new _FListNode[states.Length, sigma.Length];
-			var pending = new Queue<_IntPair>();
+			var pending = new Queue<KeyValuePair<int, int>>();
 			var pending2 = new bool[sigma.Length, states.Length];
 			var split = new List<FA>();
 			var split2 = new bool[states.Length];
@@ -1774,7 +1774,7 @@ namespace F
 				int a0 = active[0, x].Count;
 				int a1 = active[1, x].Count;
 				int j = a0 <= a1 ? 0 : 1;
-				pending.Enqueue(new _IntPair(j, x));
+				pending.Enqueue(new KeyValuePair<int,int>(j, x));
 				pending2[x, j] = true;
 			}
 
@@ -1782,9 +1782,9 @@ namespace F
 			int k = 2;
 			while (pending.Count > 0)
 			{
-				_IntPair ip = pending.Dequeue();
-				int p = ip.N1;
-				int x = ip.N2;
+				KeyValuePair<int,int> ip = pending.Dequeue();
+				int p = ip.Key;
+				int x = ip.Value;
 				pending2[x, p] = false;
 
 				// Find states that need to be split off their blocks.
@@ -1839,12 +1839,12 @@ namespace F
 							if (!pending2[c, j] && 0 < aj && aj <= ak)
 							{
 								pending2[c, j] = true;
-								pending.Enqueue(new _IntPair(j, c));
+								pending.Enqueue(new KeyValuePair<int,int>(j, c));
 							}
 							else
 							{
 								pending2[c, k] = true;
-								pending.Enqueue(new _IntPair(k, c));
+								pending.Enqueue(new KeyValuePair<int,int>(k, c));
 							}
 						}
 
@@ -1932,25 +1932,7 @@ namespace F
 				list.Add(default(T));
 			}
 		}
-		private sealed class _IntPair
-		{
-			private readonly int n1;
-			private readonly int n2;
-
-			public _IntPair(int n1, int n2)
-			{
-				this.n1 = n1;
-				this.n2 = n2;
-			}
-
-			public int N1 {
-				get { return n1; }
-			}
-
-			public int N2 {
-				get { return n2; }
-			}
-		}
+		
 		private sealed class _FList
 		{
 			public int Count { get; set; }
@@ -2820,7 +2802,7 @@ namespace F
 				yield return ch;
 			}
 		}
-		sealed class _KeySet<T> : ISet<T>, IEquatable<_KeySet<T>>
+		private sealed class _KeySet<T> : ISet<T>, IEquatable<_KeySet<T>>
 		{
 			HashSet<T> _inner;
 			int _hashCode;
