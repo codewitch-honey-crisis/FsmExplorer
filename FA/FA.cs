@@ -60,12 +60,34 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using LC;
 namespace F
 {
+#if FALIB
+	public
+#endif
+	partial struct FAMatch
+	{
+		public int SymbolId { get; private set; }
+		public string Value { get; private set; }
+		public long Position { get; private set; }
+		public int Line { get; private set; }
+		public int Column { get; private set; }
+		public FAMatch(int symbolId, string value, long position, int line, int column)
+		{
+			SymbolId = symbolId;
+			Value = value;
+			Position = position;
+			Line = line;
+			Column = column;
+		}
+	}
 #if FALIB
 	public
 #endif
@@ -1972,6 +1994,19 @@ namespace F
 			return false;
 		}
 		/// <summary>
+		/// Indicates whether or not the collection of states contains an accepting state
+		/// </summary>
+		/// <param name="states">The states to check</param>
+		/// <returns>True if one or more of the states is accepting, otherwise false</returns>
+		public static int GetFirstAcceptSymbol(IEnumerable<FA> states)
+		{
+			foreach (var state in states)
+			{
+				if (state.IsAccepting) return state.AcceptSymbol;
+			}
+			return -1;
+		}
+		/// <summary>
 		/// Fills a list with all of the new states after moving from a given set of states along a given input. (NFA-move)
 		/// </summary>
 		/// <param name="states">The current states</param>
@@ -2265,81 +2300,102 @@ namespace F
 		/// Searches through text for the next occurance of a pattern matchable by this machine
 		/// </summary>
 		/// <param name="lc">The <see cref="LexContext"/> with the text to search</param>
-		/// <returns>The 0 based position of the next match or less than 0 if not found.</returns>
-		public long Search(LexContext lc)
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(LexContext lc)
 		{
+			long position = lc.Position;
+			int line = lc.Line;
+			int column = lc.Column;
+
 			lc.EnsureStarted();
 			lc.ClearCapture();
-			var result = lc.Position;
-			if (IsDeterministic)
+			if(lc.Current == LexContext.EndOfInput)
 			{
-				while (lc.Current != LexContext.EndOfInput)
-				{
-					var state = this;
-					while (true)
-					{
-						var next = state.DfaMove(lc.Current);
-						if (null == next)
-						{
-							if (state.IsAccepting && lc.CaptureBuffer.Length > 1)
-							{
-								return result - 1;
-							}
-							lc.ClearCapture();
-							lc.Advance();
-							result = -1;
-							break;
-						}
-						if (result == -1)
-						{
-							result = lc.Position;
-						}
-						lc.Capture();
-						lc.Advance();
-						state = next;
-						if (lc.Current == LexContext.EndOfInput)
-						{
-							return state.IsAccepting ? result - 1 : -1;
-						}
-					}
-				}
-				return this.IsAccepting ? result - 1 : -1;
+				yield break;
 			}
-			else
+			if(IsDeterministic)
 			{
-				while (lc.Current != LexContext.EndOfInput)
+				var state = this;
+				while (true)
 				{
-					IList<FA> states = new List<FA>();
-					states.Add(this);
-					while (true)
+					var next = state.DfaMove(lc.Current);
+					if(next!=null)
 					{
-						states = FillEpsilonClosure(states,null);
-						var next = FA.FillMove(states, lc.Current);
-						if (next.Count == 0)
-						{
-							if (HasAcceptingState(states) && lc.CaptureBuffer.Length > 1)
-							{
-								return result - 1;
-							}
-							lc.ClearCapture();
-							lc.Advance();
-							result = -1;
-							break;
-						}
-						if (result == -1)
-						{
-							result = lc.Position;
-						}
 						lc.Capture();
-						lc.Advance();
-						states = next;
+						state = next;
+					} else
+					{
+						if(state.IsAccepting)
+						{
+							yield return new FAMatch(state.AcceptSymbol, lc.CaptureBuffer.ToString(), position, line, column);
+						}
+						lc.ClearCapture();
+						position = lc.Position;
+						line = lc.Line;
+						column = lc.Column;
+						state = this;
 						if (lc.Current == LexContext.EndOfInput)
 						{
-							return HasAcceptingState(states) ? result - 1 : -1;
+							break;
 						}
 					}
+					lc.Advance();
 				}
-				return this.IsAccepting ? result - 1 : -1;
+			} else
+			{
+				var initial = this.FillEpsilonClosure();
+				var states = initial;
+				while (true)
+				{
+					var next = FillMove(states, lc.Current);
+					if (next != null && next.Count>0)
+					{
+						lc.Capture();
+						states = FillEpsilonClosure(next, null);
+					}
+					else
+					{
+						int acc = GetFirstAcceptSymbol(states);
+						if (acc>-1) 
+						{
+							yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
+						}
+						lc.ClearCapture();
+						position = lc.Position;
+						line = lc.Line;
+						column = lc.Column;
+						states = initial;
+						if(lc.Current == LexContext.EndOfInput)
+						{
+							break;
+						}
+					}
+					lc.Advance();
+				}
+			}
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="@string">The <see cref="IEnumerable{char}"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(IEnumerable<char> @string)
+		{
+			foreach(var match in Search(LexContext.Create(@string)))
+			{
+				yield return match;
+			}
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="reader">The <see cref="TextReader"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(TextReader reader)
+		{
+			foreach (var match in Search(LexContext.CreateFrom(reader)))
+			{
+				yield return match;
 			}
 		}
 		/// <summary>
@@ -2347,74 +2403,96 @@ namespace F
 		/// </summary>
 		/// <param name="dfa">The DFA state table</param>
 		/// <param name="lc">The <see cref="LexContext"/> with the text to search</param>
-		/// <returns>The 0 based position of the next match or less than 0 if not found.</returns>
-		public static long Search(int[] dfa, LexContext lc)
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public static IEnumerable<FAMatch> Search(int[] dfa, LexContext lc)
 		{
+			long position = lc.Position;
+			int line = lc.Line;
+			int column = lc.Column;
+
 			lc.EnsureStarted();
 			lc.ClearCapture();
-			var result = lc.Position;
-			while (lc.Current != LexContext.EndOfInput)
+			if (lc.Current == LexContext.EndOfInput)
 			{
-				var si = 0;
-				while (true)
+				yield break;
+			}
+
+			int si=0;
+			while (true)
+			{
+				int acc = dfa[si++];
+				var trns = dfa[si++];
+				var moved = false;
+				for(var i = 0;i<trns;++i)
 				{
-					var acc = dfa[si++];
-					if (lc.Current == LexContext.EndOfInput)
+					var tto = dfa[si++];
+					var prlen = dfa[si++];
+					for (var j = 0; j < prlen; ++j)
 					{
-						if (acc != -1 && lc.CaptureBuffer.Length > 1)
+						var min = dfa[si++];
+						var max = dfa[si++];
+						if (min > lc.Current)
 						{
-							return result - 1;
+							si += (prlen - (j + 1)) * 2;
+							break;
 						}
-					}
-					var trns = dfa[si++];
-					var matched = false;
-					for (var i = 0; i < trns; ++i)
-					{
-						var tto = dfa[si++];
-						var prlen = dfa[si++];
-						for (var j = 0; j < prlen; ++j)
+						if (max >= lc.Current)
 						{
-							var min = dfa[si++];
-							var max = dfa[si++];
-							if (min > lc.Current)
-							{
-								si += (prlen - (j + 1)) * 2;
-								break;
-							}
-							if (max >= lc.Current)
-							{
-								si = tto;
-								matched = true;
-								goto next_state;
-							}
+							moved = true;
+							si = tto;
+							goto next;
 						}
-					}
-					next_state:
-					if (!matched)
-					{
-						if (acc != -1 && lc.CaptureBuffer.Length > 1)
-						{
-							return result - 1;
-						}
-						lc.ClearCapture();
-						lc.Advance();
-						result = -1;
-						si = 0;
-						break;
-					}
-					if (result == -1)
-					{
-						result = lc.Position;
-					}
-					lc.Capture();
-					lc.Advance();
-					if (lc.Current == LexContext.EndOfInput)
-					{
-						return dfa[si] != -1 ? result - 1 : -1;
 					}
 				}
+			next:
+				if(moved)
+				{
+					lc.Capture();
+				}
+				else
+				{
+					if (acc!=-1)
+					{
+						yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
+					}
+					lc.ClearCapture();
+					position = lc.Position;
+					line = lc.Line;
+					column = lc.Column;
+					si = 0;
+					if (lc.Current == LexContext.EndOfInput)
+					{
+						break;
+					}
+				}
+				lc.Advance();
 			}
-			return dfa[0] != -1 ? result - 1 : -1;
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="dfa">The DFA state table</param>
+		/// <param name="@string">The <see cref="IEnumerable{char}"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public static IEnumerable<FAMatch> Search(int[] dfa, IEnumerable<char> @string)
+		{
+			foreach (var match in Search(dfa,LexContext.Create(@string)))
+			{
+				yield return match;
+			}
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="dfa">The DFA state table</param>
+		/// <param name="reader">The <see cref="TextReader"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public static IEnumerable<FAMatch> Search(int[] dfa, TextReader reader)
+		{
+			foreach (var match in Search(dfa,LexContext.CreateFrom(reader)))
+			{
+				yield return match;
+			}
 		}
 		public static IEnumerable<int> ToUtf32(IEnumerable<char> @string)
 		{

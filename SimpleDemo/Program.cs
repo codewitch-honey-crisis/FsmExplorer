@@ -1,11 +1,16 @@
 ﻿using System;
 using F;
-using LC;
 namespace SimpleDemo {
     class Program {
-		static void Main(string[] args) {
+		static void Main() {
 			// our expression
-			var exp = @"foo|bar|[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
+			var exp = @"[A-Z_a-z][A-Z_a-z0-9]*|0|\-?[1-9][0-9]*";
+			// search through a string
+			foreach (var match in FA.Parse(exp).Search("the quick brown fox jumped over the -10 lazy dog"))
+			{
+				Console.WriteLine("{0} at {1}", match.Value, match.Position);
+			}
+			return;
 			// parse it
 			var ast = RegexExpression.Parse(exp);
 			ast.Visit((parent, expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
@@ -21,18 +26,30 @@ namespace SimpleDemo {
 			opts.AcceptSymbolNames = new string[] { "accept" };
 			// uncomment to hide expanded epsilons
 			//nfa.Compact();
-			
+			// compute the NFA table
 			var array = nfa.ToArray();
 			Console.WriteLine("NFA table length is {0} entries.",array.Length);
+			// rebuild the NFA from the table
 			nfa = FA.FromArray(array);
+			// make a jpg
 			nfa.RenderToFile(@"..\..\..\expression_nfa.jpg",opts);
+			// make a dot file
 			nfa.RenderToFile(@"..\..\..\expression_nfa.dot", opts);
+			// make a DFA
 			var dfa = nfa.ToDfa();
+			// optimize the DFA
 			var mdfa = dfa.ToMinimized();
+			// make a DFA table
 			array = mdfa.ToArray();
 			Console.WriteLine("Min DFA table length is {0} entries.", array.Length);
+			// search through a string
+			foreach (var match in FA.Search(array, "the quick brown fox jumped over the -10 lazy dog"))
+			{
+				Console.WriteLine("{0} at {1}", match.Value, match.Position);
+			}
+			// make a jpg
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.jpg",opts);
-
+			// make a dot file
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.dot", opts);
 		}
     }
