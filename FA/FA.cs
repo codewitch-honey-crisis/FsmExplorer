@@ -60,25 +60,48 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 
 using LC;
 namespace F
 {
+	/// <summary>
+	/// Represents a match from <code>FA.Search()</code>
+	/// </summary>
 #if FALIB
 	public
 #endif
 	partial struct FAMatch
 	{
+		/// <summary>
+		/// The matched symbol - this is the accept id
+		/// </summary>
 		public int SymbolId { get; private set; }
+		/// <summary>
+		/// The matched value
+		/// </summary>
 		public string Value { get; private set; }
+		/// <summary>
+		/// The position of the match within the codepoint series - this may not be the same as the character position due to surrogates
+		/// </summary>
 		public long Position { get; private set; }
+		/// <summary>
+		/// The one based line number
+		/// </summary>
 		public int Line { get; private set; }
+		/// <summary>
+		/// The one based column
+		/// </summary>
 		public int Column { get; private set; }
+		/// <summary>
+		/// Constructs a new instance
+		/// </summary>
+		/// <param name="symbolId">The symbol id</param>
+		/// <param name="value">The matched value</param>
+		/// <param name="position">The absolute codepoint position</param>
+		/// <param name="line">The line</param>
+		/// <param name="column">The column</param>
 		public FAMatch(int symbolId, string value, long position, int line, int column)
 		{
 			SymbolId = symbolId;
@@ -88,14 +111,32 @@ namespace F
 			Column = column;
 		}
 	}
+	/// <summary>
+	/// Represents a transition within a state
+	/// </summary>
 #if FALIB
 	public
 #endif
 	partial struct FATransition
 	{
+		/// <summary>
+		/// The minimum codepoint. For epsilons this is -1.
+		/// </summary>
 		public int Min;
+		/// <summary>
+		/// The maximum codepoint. For epsilons this is -1.
+		/// </summary>
 		public int Max;
+		/// <summary>
+		/// The state to transition to
+		/// </summary>
 		public FA To;
+		/// <summary>
+		/// Constructs a new instance
+		/// </summary>
+		/// <param name="min">The minumum codepoint</param>
+		/// <param name="max">The maximum codepoint</param>
+		/// <param name="to">The state to transition to</param>
 		public FATransition(int min, int max, FA to)
 		{
 			Min = min;
@@ -104,50 +145,90 @@ namespace F
 		}
 
 	}
+	/// <summary>
+	/// The filter predicate delegate for <see cref="FA.FindFirst(FAFindFilter)" and <see cref="FA.FillFind(FAFindFilter, IList{FA})"/>/>
+	/// </summary>
+	/// <param name="state">The state to check</param>
+	/// <returns>True if matched, otherwise false</returns>
 #if FALIB
 	public
 #endif
 	delegate bool FAFindFilter(FA state);
+	/// <summary>
+	/// Represents a single state in a state machine
+	/// </summary>
 #if FALIB
 	public
 #endif
 	partial class FA
 	{
+		/// <summary>
+		/// This state has collapsed epsilons
+		/// </summary>
 		public bool IsCompact { get; set; } = true;
+		/// <summary>
+		/// This state has no overlapping transitions and no epsilon transitions
+		/// </summary>
 		public bool IsDeterministic { get; set; } = true;
+		/// <summary>
+		/// The symbol id if this state is accepting, otherwise -1
+		/// </summary>
 		public int AcceptSymbol { get; set; } = -1;
-		public int Tag { get; set; } = 0;
+		/// <summary>
+		/// A value used for state minimization
+		/// </summary>
+		internal int Tag { get; set; } = 0;
+		/// <summary>
+		/// The list of states this state was constructed from, if applicable, otherwise null
+		/// </summary>
 		public FA[] FromStates { get; set; } = null;
+		/// <summary>
+		/// The id of the state, used for debugging
+		/// </summary>
 		public int Id { get; set; } = -1;
+		/// <summary>
+		/// A filter that returns any accepting state
+		/// </summary>
 		public static readonly FAFindFilter AcceptingFilter = new FAFindFilter((FA state)=>{ return state.IsAccepting; });
+		/// <summary>
+		/// A filter that returns any final states
+		/// </summary>
 		public static readonly FAFindFilter FinalFilter = new FAFindFilter((FA state) => { return state.IsFinal; });
+		/// <summary>
+		/// A filter that returns any neutral states
+		/// </summary>
 		public static readonly FAFindFilter NeutralFilter = new FAFindFilter((FA state) => { return state.IsNeutral; });
+		/// <summary>
+		/// The list of transitions from this state
+		/// </summary>
 		public readonly List<FATransition> Transitions = new List<FATransition>();
+		/// <summary>
+		/// Constructs a new instance
+		/// </summary>
+		/// <param name="acceptSymbol">The symbol to accept, or -1</param>
 		public FA(int acceptSymbol)
 		{
 			AcceptSymbol = acceptSymbol;
 		}
+		/// <summary>
+		/// Constructs a new instance
+		/// </summary>
 		public FA() { }
+		/// <summary>
+		/// Indicates if the state accepts. False if it doesn't, otherwise true
+		/// </summary>
 		public bool IsAccepting {
 			get {
 				return AcceptSymbol > -1;
 			}
 		}
+		/// <summary>
+		/// Indicates if the state has no transitions
+		/// </summary>
 		public bool IsFinal { get { return 0 == Transitions.Count; } }
-		public bool IsEpsilonAccepting {
-			get {
-				if(IsAccepting)
-				{
-					return true;
-				}
-				if(IsDeterministic)
-				{
-					return false;
-				}
-				var epsc = FillEpsilonClosure();
-				return HasAcceptingState(epsc);
-			}
-		}
+		/// <summary>
+		/// Indicates if the state does not change the accepted input
+		/// </summary>
 		public bool IsNeutral {
 			get {
 				if(!IsAccepting && 1==Transitions.Count)
@@ -161,6 +242,11 @@ namespace F
 				return false;
 			}
 		}
+		/// <summary>
+		/// Adds an epsilon transition to the machine
+		/// </summary>
+		/// <param name="to">The destination state</param>
+		/// <param name="compact">True to copy the epsilon data directly to this state, collapsing it, otherwise false to keep the epsilon in expanded form</param>
 		public void AddEpsilon(FA to, bool compact = true)
 		{
 			IsDeterministic = false;
@@ -183,6 +269,9 @@ namespace F
 			Transitions.Add(fat);
 			IsCompact = false;
 		}
+		/// <summary>
+		/// Set the ids for each state in this machine
+		/// </summary>
 		public void SetIds()
 		{
 			var cls = new List<FA>();
@@ -193,6 +282,11 @@ namespace F
 				closure[i].Id = i;
 			}
 		}
+		/// <summary>
+		/// Converts the state to a string.
+		/// </summary>
+		/// <remarks>If the id is set, this will report it.</remarks>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			if (Id < 0)
@@ -216,6 +310,12 @@ namespace F
 				t.To._Closure(result,seen);
 			}
 		}
+		/// <summary>
+		/// Computes the closure of this state into a list.
+		/// </summary>
+		/// <remarks>The closure is the list of states reachable from this state including itself. It essentially lists the states that make up the machine. This state is always the first state in the list.</remarks>
+		/// <param name="result">The list to fill</param>
+		/// <returns>A list filled with the closure. If <paramref name="result"/> is specified, that instance will be filled and returned. Otherwise a new list is filled and returned.</returns>
 		public IList<FA> FillClosure(IList<FA> result = null)
 		{
 			if (null == result)
@@ -240,7 +340,12 @@ namespace F
 				t.To._Find(filter,result, seen);
 			}
 		}
-
+		/// <summary>
+		/// Finds states within the closure that match the filter criteria
+		/// </summary>
+		/// <param name="filter">The filter predicate to use.</param>
+		/// <param name="result">The result to fill</param>
+		/// <returns>A list filled with the result of the find. If <paramref name="result"/> is specified, that instance will be filled and returned. Otherwise a new list is filled and returned.</returns>
 		public IList<FA> FillFind(FAFindFilter filter, IList<FA> result = null)
 		{
 			if (null == result)
@@ -270,12 +375,22 @@ namespace F
 			}
 			return null;
 		}
-
+		/// <summary>
+		/// Finds the first state within the closure that matches the filter critera
+		/// </summary>
+		/// <param name="filter">The filter predicate to use</param>
+		/// <returns>The first state that matches the filter criteria, or null if not found.</returns>
 		public FA FindFirst(FAFindFilter filter)
 		{
 			var set = new HashSet<FA>();
 			return _FindFirst(filter, set);
 		}
+		/// <summary>
+		/// Computes the epsilon closure of this machine.
+		/// </summary>
+		/// <remarks>The epsilon closure is the list of all states reachable from this state on no input.</remarks>
+		/// <param name="result">The result to fill or null</param>
+		/// <returns>A list filled with the epsilon closure. If <paramref name="result"/> is specified, that instance will be filled and returned. Otherwise a new list is filled and returned.</returns>
 		public IList<FA> FillEpsilonClosure(IList<FA> result = null)
 		{
 			if (null == result)
@@ -298,6 +413,13 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Computes the total epsilon closure of a list of states
+		/// </summary>
+		/// <remarks>The epsilon closure is the list of all states reachable from these states on no input.</remarks>
+		/// <param name="states">The states to compute on</param>
+		/// <param name="result">The result to fill, or null if a new list is to be returned. This parameter is required in order to disambiguate with the instance method of the same name.</param>
+		/// <returns></returns>
 		public static IList<FA> FillEpsilonClosure(IEnumerable<FA> states, IList<FA> result)
 		{
 			if (null == result)
@@ -316,6 +438,11 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Creates a new set of states that represent the path to a given state, excluding other states.
+		/// </summary>
+		/// <param name="to">The state to traverse to</param>
+		/// <returns>A new set of states from cloned from this machine which lead to <paramref name="to"/></returns>
 		public FA ClonePathTo(FA to)
    		{
    			var closure = FillClosure();
@@ -324,6 +451,7 @@ namespace F
    			{
    				nclosure[i] = new FA(closure[i].AcceptSymbol);
    				nclosure[i].Tag = closure[i].Tag;
+				nclosure[i].Id = closure[i].Id;
 				nclosure[i].FromStates = closure[i].FromStates;
    			}
    			for (var i = 0; i < nclosure.Length; i++)
@@ -340,6 +468,11 @@ namespace F
    			}
    			return nclosure[0];
    		}
+		/// <summary>
+		/// Computes state indices that represent the path to a given state, excluding other states.
+		/// </summary>
+		/// <param name="to">The state to traverse to</param>
+		/// <returns>An array of indices this machine which lead to <paramref name="to"/></returns>
 		public int[] PathToIndices(FA to)
 		{
 			var closure = FillClosure();
@@ -354,11 +487,21 @@ namespace F
 			}
 			return result.ToArray();
 		}
-
+		/// <summary>
+		/// Finds the accepting states of this machine.
+		/// </summary>
+		/// <param name="result">The result to fill or null</param>
+		/// <returns>A list filled with the accepting states. If <paramref name="result"/> is specified, that instance will be filled and returned. Otherwise a new list is filled and returned.</returns>
 		public IList<FA> FillAcceptingStates(IList<FA> result = null)
 		{
 			return FillFind(AcceptingFilter, result);
 		}
+		/// <summary>
+		/// Finds the accepting states of the closure.
+		/// </summary>
+		/// <param name="closure">The closure to search</param>
+		/// <param name="result">The result to fill or null</param>
+		/// <returns>A list filled with the accepting states. If <paramref name="result"/> is specified, that instance will be filled and returned. Otherwise a new list is filled and returned.</returns>
 		public static IList<FA> FillAcceptingStates(IList<FA> closure, IList<FA> result = null)
 		{
 			if (null == result)
@@ -371,6 +514,12 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Computes a dictionary keyed by states, whose values are the ranges that lead to that state packed as an integer array.
+		/// </summary>
+		/// <param name="includeEpsilons">Indicates that epsilon transitions should be included in the result</param>
+		/// <param name="result">The dictionary to fill, or null for a new dictionary</param>
+		/// <returns>A dictionary of packed sorted ranges grouped by destination state. If <paramref name="result"/> was specified, that will be returned.</returns>
 		public IDictionary<FA, int[]> FillInputTransitionRangesGroupedByState(bool includeEpsilons = false, IDictionary<FA, int[]> result = null)
 		{
 			var working = new Dictionary<FA, List<KeyValuePair<int, int>>>();
@@ -414,7 +563,16 @@ namespace F
 				}
 			}
 		}
+		/// <summary>
+		/// Creates a deep copy of the current machine
+		/// </summary>
+		/// <returns>A new machine that is a duplicate of this machine</returns>
 		public FA Clone() { return Clone(FillClosure()); }
+		/// <summary>
+		/// Creates a deep copy of the closure
+		/// </summary>
+		/// <param name="closure">The closure to copy</param>
+		/// <returns>A new machine that has a deep copy of the given closure</returns>
 		public static FA Clone(IList<FA> closure)
 		{
 			var nclosure = new FA[closure.Count];
@@ -438,6 +596,14 @@ namespace F
 			}
 			return nclosure[0];
 		}
+		/// <summary>
+		/// Creates a literal machine given the UTF-32 string
+		/// </summary>
+		/// <remarks>Use <code>ToUtf32()</code> to compute from characters.</remarks>
+		/// <param name="string">The codepoints to create the literal from.</param>
+		/// <param name="accept">The accepting id</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the literal expression</returns>
 		public static FA Literal(IEnumerable<int> @string, int accept = 0, bool compact = true)
 		{
 			var result = new FA();
@@ -452,6 +618,13 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Creates a charset machine represeting the given the UTF-32 codepoint ranges
+		/// </summary>
+		/// <param name="ranges">The <see cref="KeyValuePair{Int32, Int32}"/> codepoint ranges to create the set from.</param>
+		/// <param name="accept">The accepting id</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the set expression</returns>
 		public static FA Set(IEnumerable<KeyValuePair<int, int>> ranges, int accept = 0, bool compact = true)
 		{
 			var result = new FA();
@@ -463,7 +636,13 @@ namespace F
 
 			return result;
 		}
-
+		/// <summary>
+		/// Creates a machine that is a concatenation of the given expressions
+		/// </summary>
+		/// <param name="exprs">The expressions to concatenate</param>
+		/// <param name="accept">The accept id</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the concatenated expressions</returns>
 		public static FA Concat(IEnumerable<FA> exprs, int accept = 0, bool compact = true)
 		{
 			FA result = null, left = null, right = null;
@@ -522,6 +701,13 @@ namespace F
 				//Debug.Assert(null!= lhs.FirstAcceptingState);
 			}
 		}
+		/// <summary>
+		/// Creates a machine that is a disjunction between several expressions.
+		/// </summary>
+		/// <param name="exprs">The expressions that represent the possible choices to match</param>
+		/// <param name="accept">The accept id</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the or expression</returns>
 		public static FA Or(IEnumerable<FA> exprs, int accept = 0, bool compact = true)
 		{
 			var result = new FA();
@@ -544,6 +730,13 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="expr">The expression to make optional</param>
+		/// <param name="accept">The accept id</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the optional expression</returns>
 		public static FA Optional(FA expr, int accept = 0, bool compact = true)
 		{
 			var result = expr.Clone();
@@ -556,6 +749,16 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Creates a repetition of the given expression
+		/// </summary>
+		/// <param name="expr">The expression to repeat</param>
+		/// <param name="minOccurs">The minimum number of times <paramref name="expr"/> should occur</param>
+		/// <param name="maxOccurs">The maximum number of times <paramref name="expr"/> should occur. Specify 0 or -1 for unbounded.</param>
+		/// <param name="accept">The accept id to use</param>
+		/// <param name="compact">True to collapse epsilons, false to generate expanded epsilons</param>
+		/// <returns>A new machine representing the repeated expression</returns>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="minOccurs"/> or <paramref name="maxOccurs"/> is an invalid value</exception>
 		public static FA Repeat(FA expr, int minOccurs = -1, int maxOccurs = -1, int accept = 0,bool compact = true)
 		{
 			expr = expr.Clone();
@@ -640,10 +843,14 @@ namespace F
 							return result;
 					}
 			}
-			// should never get here
-			throw new NotImplementedException();
 		}
-		public static FA CaseInsensitive(FA expr, int accept = 0)
+		/// <summary>
+		/// Makes a machine case insensitive
+		/// </summary>
+		/// <param name="expr">The expression to make case insensitive</param>
+		/// <returns></returns>
+		/// <exception cref="NotSupportedException"></exception>
+		public static FA CaseInsensitive(FA expr)
 		{
 			var result = expr.Clone();
 			var closure = new List<FA>();
@@ -684,7 +891,17 @@ namespace F
 			}
 			return result;
 		}
-
+		/// <summary>
+		/// Parses an expression from the input
+		/// </summary>
+		/// <param name="input">The string to parse</param>
+		/// <param name="accept">The accept id for the final expression</param>
+		/// <param name="compact">True to collapse epsilons, false to expand epsilons</param>
+		/// <param name="line">The starting line</param>
+		/// <param name="column">The starting column</param>
+		/// <param name="position">The starting position</param>
+		/// <param name="fileOrUrl">The source file or url</param>
+		/// <returns>A new expression parsed from the string</returns>
 		public static FA Parse(IEnumerable<char> input, int accept = 0, bool compact = true, int line = 1, int column = 1, long position = 0, string fileOrUrl = null)
 		{
 			var lc = LexContext.Create(input);
@@ -693,6 +910,13 @@ namespace F
 			var result = Parse(lc, accept,compact);
 			return result;
 		}
+		/// <summary>
+		/// Parses an expression from the input
+		/// </summary>
+		/// <param name="pc">The <see cref="LexContext"/> to parse</param>
+		/// <param name="accept">The accept id for the final expression</param>
+		/// <param name="compact">True to collapse epsilons, false to expand epsilons</param>
+		/// <returns>A new expression parsed from the <see cref="LexContext"/> instance</returns>
 		internal static FA Parse(LexContext pc, int accept = 0, bool compact = true)
 		{
 
@@ -1270,6 +1494,11 @@ namespace F
 					return i;
 			}
 		}
+		/// <summary>
+		/// Turns packed ranges into unpacked ranges
+		/// </summary>
+		/// <param name="packedRanges">The ranges to unpack</param>
+		/// <returns>The unpacked ranges</returns>
 		static internal KeyValuePair<int, int>[] ToPairs(int[] packedRanges)
 		{
 			var result = new KeyValuePair<int, int>[packedRanges.Length / 2];
@@ -1280,6 +1509,11 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Packs a series of ranges
+		/// </summary>
+		/// <param name="pairs">The ranges to pack</param>
+		/// <returns>The packed ranges</returns>
 		static internal int[] FromPairs(IList<KeyValuePair<int, int>> pairs)
 		{
 			var result = new int[pairs.Count * 2];
@@ -1292,10 +1526,20 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Inverts a set of packed ranges
+		/// </summary>
+		/// <param name="ranges">The packed ranges to invert</param>
+		/// <returns>The inverted unpacked</returns>
 		static internal IList<KeyValuePair<int, int>> NotRanges(int[] ranges)
 		{
 			return new List<KeyValuePair<int, int>>(NotRanges(ToPairs(ranges)));
 		}
+		/// <summary>
+		/// Inverts a set of unpacked ranges
+		/// </summary>
+		/// <param name="ranges">The ranges to invert</param>
+		/// <returns>The inverted ranges</returns>
 		static internal IEnumerable<KeyValuePair<int, int>> NotRanges(IEnumerable<KeyValuePair<int, int>> ranges)
 		{
 			// expects ranges to be normalized
@@ -1332,14 +1576,27 @@ namespace F
 			}
 
 		}
+		/// <summary>
+		/// Makes a machine that is a deterministic equivalent of this machine
+		/// </summary>
+		/// <param name="progress">The progress indicator instance</param>
+		/// <returns>A deterministic version of this machine</returns>
 		public FA ToDfa(IProgress<int> progress = null)
 		{
 			return _Determinize(this,progress);
 		}
+		/// <summary>
+		/// Converts to a DFA and optimizes the result
+		/// </summary>
+		/// <param name="progress">The progress indicator instance</param>
+		/// <returns>A deterministic optimized version of this machine</returns>
 		public FA ToMinimized(IProgress<int> progress = null)
 		{
 			return _Minimize(this,progress);
 		}
+		/// <summary>
+		/// For this machine, fills and sorts transitions such that any missing range now points to an empty non-accepting state
+		/// </summary>
 		public void Totalize()
 		{
 			Totalize(FillClosure());
@@ -1349,6 +1606,10 @@ namespace F
 		{
 			var c = x.Min.CompareTo(y.Min); if (0 != c) return c; return x.Max.CompareTo(y.Max);
 		}
+		/// <summary>
+		/// For this closure, fills and sorts transitions such that any missing range now points to an empty non-accepting state
+		/// </summary>
+		/// <param name="closure">The closure to totalize</param>
 		public static void Totalize(IList<FA> closure)
 		{
 			var s = new FA();
@@ -1703,6 +1964,10 @@ namespace F
 				return new _FListNode(q, this);
 			}
 		}
+		/// <summary>
+		/// Creates a packed state table as a series of integers
+		/// </summary>
+		/// <returns>An integer array representing the machine</returns>
 		public int[] ToArray()
 		{
 			var working = new List<int>();
@@ -1748,6 +2013,11 @@ namespace F
 			}
 			return result;
 		}
+		/// <summary>
+		/// Builds a state machine based on the packed state table
+		/// </summary>
+		/// <param name="fa">The state table to build from</param>
+		/// <returns>A new machine that represents the given packed state table</returns>
 		public static FA FromArray(int[] fa)
 		{
 			if (null == fa) return null;
@@ -2067,7 +2337,7 @@ namespace F
 		/// Retrieves all transition indices given a specified UTF32 codepoint
 		/// </summary>
 		/// <param name="codepoint">The codepoint</param>
-		/// <returns>The indices of the matching transition or empty if no match was found.</returns>
+		/// <returns>The indices of the matching transitions or empty if no match was found.</returns>
 		public int[] FindTransitionIndices(int codepoint)
 		{
 			var result = new List<int>(Transitions.Count);
@@ -2090,9 +2360,13 @@ namespace F
 		/// </summary>
 		/// <param name="codepoint">The codepoint to move on</param>
 		/// <returns>The next state, or null if there was no valid move.</returns>
-		/// <remarks>This machine must be a DFA or this won't work correctly.</remarks>
-		public FA DfaMove(int codepoint)
+		/// <remarks>This machine must be a DFA or this will error. Use FillMove() to work with any (slower).</remarks>
+		public FA Move(int codepoint)
 		{
+			if(!IsDeterministic)
+			{
+				throw new InvalidOperationException("The state machine must be deterministic");
+			}
 			var i = FindTransitionIndex(codepoint);
 			if (-1 < i)
 			{
@@ -2105,16 +2379,16 @@ namespace F
 		/// </summary>
 		/// <param name="text">The text</param>
 		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public bool IsMatch(IEnumerable<char> text)
+		public int Match(IEnumerable<char> text)
 		{
-			return IsMatch(LexContext.Create(text));
+			return Match(LexContext.Create(text));
 		}
 		/// <summary>
 		/// Indicates whether this machine will match the indicated text
 		/// </summary>
 		/// <param name="lc">A <see cref="LexContext"/> containing the text</param>
 		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public bool IsMatch(LexContext lc)
+		public int Match(LexContext lc)
 		{
 			lc.EnsureStarted();
 			if (IsDeterministic)
@@ -2122,20 +2396,20 @@ namespace F
 				var state = this;
 				while (true)
 				{
-					var next = state.DfaMove(lc.Current);
+					var next = state.Move(lc.Current);
 					if (null == next)
 					{
 						if (state.IsAccepting)
 						{
-							return lc.Current == LexContext.EndOfInput;
+							return lc.Current == LexContext.EndOfInput?state.AcceptSymbol:-1;
 						}
-						return false;
+						return -1;
 					}
 					lc.Advance();
 					state = next;
 					if (lc.Current == LexContext.EndOfInput)
 					{
-						return state.IsAccepting;
+						return state.AcceptSymbol;
 					}
 				}
 			}
@@ -2149,21 +2423,26 @@ namespace F
 					var next = FA.FillMove(states, lc.Current);
 					if (next.Count == 0)
 					{
-						if (HasAcceptingState(states))
+						var acc = GetFirstAcceptSymbol(states);
+						if (acc>-1)
 						{
-							return lc.Current == LexContext.EndOfInput;
+							return lc.Current == LexContext.EndOfInput?acc:-1;
 						}
-						return false;
+						return -1;
 					}
 					lc.Advance();
 					states = next;
 					if (lc.Current == LexContext.EndOfInput)
 					{
-						return HasAcceptingState(states);
+						return GetFirstAcceptSymbol(states);
 					}
 				}
 			}
 		}
+		/// <summary>
+		/// Collapses epsilon transitions
+		/// </summary>
+		/// <param name="closure">The closure to collapse</param>
 		public static void Compact(IList<FA> closure)
 		{
 			for(int i = 0; i < closure.Count;++i)
@@ -2192,6 +2471,9 @@ namespace F
 				fa.IsCompact = true;
 			}
 		}
+		/// <summary>
+		/// Collapses the epsilons on the current state machine.
+		/// </summary>
 		public void Compact()
 		{
 			Compact(FillClosure());
@@ -2202,11 +2484,17 @@ namespace F
 		/// <param name="dfa">The DFA state table</param>
 		/// <param name="text">The text</param>
 		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public static bool IsMatch(int[] dfa, IEnumerable<char> text)
+		public static int Match(int[] dfa, IEnumerable<char> text)
 		{
-			return IsMatch(dfa, LexContext.Create(text));
+			return Match(dfa, LexContext.Create(text));
 		}
-
+		/// <summary>
+		/// Creates a lexer from a series of expressions
+		/// </summary>
+		/// <param name="tokens">The expressions to add. They typically each have different accept states.</param>
+		/// <param name="makeDfa">Make the lexer a DFA. The first disjunction is converted to a DFA and the rest of the state machine is minimized.</param>
+		/// <param name="progress">The progress converting to a lexer (DFA and minimization takes time). Only applies if <paramref name="makeDfa"/> is true.</param>
+		/// <returns>The lexer machine</returns>
 		public static FA ToLexer(IEnumerable<FA> tokens, bool makeDfa = true, IProgress<int> progress = null)
 		{
 			var toks = new List<FA>(tokens);
@@ -2237,7 +2525,7 @@ namespace F
 		/// <param name="dfa">The DFA state table</param>
 		/// <param name="lc">A <see cref="LexContext"/> containing the text</param>
 		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public static bool IsMatch(int[] dfa, LexContext lc)
+		public static int Match(int[] dfa, LexContext lc)
 		{
 			lc.EnsureStarted();
 			int si = 0;
@@ -2247,7 +2535,7 @@ namespace F
 				var acc = dfa[si++];
 				if (lc.Current == LexContext.EndOfInput)
 				{
-					return acc != -1;
+					return acc;
 				}
 				// get the transitions count
 				var trns = dfa[si++];
@@ -2284,15 +2572,15 @@ namespace F
 					// is the state accepting?
 					if (acc != -1)
 					{
-						return lc.Current == LexContext.EndOfInput;
+						return lc.Current == LexContext.EndOfInput?acc:-1;
 					}
-					return false;
+					return -1;
 				}
 				lc.Advance();
 				if (lc.Current == LexContext.EndOfInput)
 				{
 					// is the current state accepting
-					return dfa[si] != -1;
+					return dfa[si];
 				}
 			}
 		}
@@ -2318,7 +2606,7 @@ namespace F
 				var state = this;
 				while (true)
 				{
-					var next = state.DfaMove(lc.Current);
+					var next = state.Move(lc.Current);
 					if(next!=null)
 					{
 						lc.Capture();
@@ -2503,6 +2791,12 @@ namespace F
 				yield return match;
 			}
 		}
+		/// <summary>
+		/// Converts a series of characters into a series of UTF-32 codepoints
+		/// </summary>
+		/// <param name="string">The series of characters to convert</param>
+		/// <returns>The series of UTF-32 codepoints</returns>
+		/// <exception cref="IOException">The characters had a sequence that was not valid unicode</exception>
 		public static IEnumerable<int> ToUtf32(IEnumerable<char> @string)
 		{
 			int chh = -1;

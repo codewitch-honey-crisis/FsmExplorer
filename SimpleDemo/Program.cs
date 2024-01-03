@@ -18,7 +18,7 @@ namespace SimpleDemo {
 			nfa.SetIds();
 			var cloned = nfa.ClonePathTo(nfa.FindFirst((fa) => { return fa.Id == 12; }));
 			cloned.RenderToFile(@"..\..\..\cloned_nfa.jpg");
-			Console.WriteLine("-10 is match: {0}", nfa.IsMatch("-10"));
+			Console.WriteLine("-10 is match: {0}", nfa.Match("-10")>-1);
 			var opts = new FADotGraphOptions();
 			// show accept symbols
 			opts.HideAcceptSymbolIds = false;
@@ -56,9 +56,12 @@ namespace SimpleDemo {
 			var num = FA.Parse("0|-?[1-9][0-9]*", 1);
 			var ws = FA.Parse("[ ]+", 2);
 			opts.AcceptSymbolNames = new string[] { "ident", "num", "ws" };
-			var lexer = FA.ToLexer(new FA[] { ident, num, ws });
-			lexer.RenderToFile(@"..\..\..\lexer_nfa.jpg", opts);
-			foreach (var match in FA.Search(lexer.ToArray(),"the quick brown fox jumped over the -10 lazy dog"))
+			var lexer = FA.ToLexer(new FA[] { ident, num, ws },false);
+			array = lexer.ToArray();
+			Console.WriteLine("Lexer state count is {0}", lexer.FillClosure().Count);
+			Console.WriteLine("Lexer table length is {0} entries.", array.Length);
+			lexer.RenderToFile(@"..\..\..\lexer_dfa.jpg", opts);
+			foreach (var match in FA.Search(array, "the quick brown fox jumped over the -10 lazy dog"))
 			{
 				Console.WriteLine("{0}:{1} at {2}", match.SymbolId, match.Value, match.Position);
 			}
