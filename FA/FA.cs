@@ -165,11 +165,11 @@ namespace F
 		/// <summary>
 		/// This state has collapsed epsilons
 		/// </summary>
-		public bool IsCompact { get; set; } = true;
+		public bool IsCompact { get; private set; } = true;
 		/// <summary>
 		/// This state has no overlapping transitions and no epsilon transitions
 		/// </summary>
-		public bool IsDeterministic { get; set; } = true;
+		public bool IsDeterministic { get; private set; } = true;
 		/// <summary>
 		/// The symbol id if this state is accepting, otherwise -1
 		/// </summary>
@@ -181,7 +181,7 @@ namespace F
 		/// <summary>
 		/// The list of states this state was constructed from, if applicable, otherwise null
 		/// </summary>
-		public FA[] FromStates { get; set; } = null;
+		public FA[] FromStates { get; private set; } = null;
 		/// <summary>
 		/// The id of the state, used for debugging
 		/// </summary>

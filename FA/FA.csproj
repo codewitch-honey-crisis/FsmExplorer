@@ -19,4 +19,8 @@
     <ProjectReference Include="..\LexContext\LexContext.csproj" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&quot;$(SolutionDir)csbrick.exe&quot; &quot;$(SolutionDir)FA\FA.csproj&quot; /output &quot;$(SolutionDir)FA.brick.cs&quot;" />
+  </Target>
+
 </Project>

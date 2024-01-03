@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace F
@@ -11,7 +9,10 @@ namespace F
 	/// <summary>
 	/// Represents optional rendering parameters for a dot graph.
 	/// </summary>
-	public sealed class FADotGraphOptions
+#if FALIB
+	public
+#endif
+		sealed class FADotGraphOptions
 	{
 		/// <summary>
 		/// The resolution, in dots-per-inch to render at

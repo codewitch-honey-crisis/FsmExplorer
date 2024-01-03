@@ -1075,7 +1075,11 @@ namespace F
 	/// <summary>
 	/// Represents an expression with a single target expression
 	/// </summary>
-	public abstract partial class RegexUnaryExpression : RegexExpression
+#if FALIB
+	public
+#endif
+
+	abstract partial class RegexUnaryExpression : RegexExpression
 	{
 		/// <summary>
 		/// Indicates the target expression
@@ -1086,7 +1090,10 @@ namespace F
 	/// <summary>
 	/// Represents a single character literal
 	/// </summary>
-	public partial class RegexLiteralExpression : RegexExpression, IEquatable<RegexLiteralExpression>
+#if FALIB
+	public
+#endif
+	partial class RegexLiteralExpression : RegexExpression, IEquatable<RegexLiteralExpression>
 	{
 		/// <summary>
 		/// Indicates whether or not this statement is a single element or not
