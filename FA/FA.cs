@@ -2475,9 +2475,10 @@ namespace F
 		/// </summary>
 		/// <param name="tokens">The expressions to add. They typically each have different accept states.</param>
 		/// <param name="makeDfa">Make the lexer a DFA. The first disjunction is converted to a DFA and the rest of the state machine is minimized.</param>
+		/// <param name="compact">True to compact epsilons, otherwise false. Does nothing if <paramref name="makeDfa"/> is true.</param>
 		/// <param name="progress">The progress converting to a lexer (DFA and minimization takes time). Only applies if <paramref name="makeDfa"/> is true.</param>
 		/// <returns>The lexer machine</returns>
-		public static FA ToLexer(IEnumerable<FA> tokens, bool makeDfa = true, IProgress<int> progress = null)
+		public static FA ToLexer(IEnumerable<FA> tokens, bool makeDfa = true, bool compact = true,IProgress<int> progress = null)
 		{
 			var toks = new List<FA>(tokens);
 			if (makeDfa)
@@ -2490,7 +2491,7 @@ namespace F
 			var result = new FA();
 			for (int i = 0; i < toks.Count; i++)
 			{
-				result.AddEpsilon(toks[i]);
+				result.AddEpsilon(toks[i],compact);
 			}
 			if (makeDfa)
 			{

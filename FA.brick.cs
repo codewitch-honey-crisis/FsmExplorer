@@ -869,7 +869,7 @@ public bool IsDeterministic{get;private set;}=true;/// <summary>
 public int AcceptSymbol{get;set;}=-1;/// <summary>
 /// A value used for state minimization
 /// </summary>
-internal int Tag{get;set;}=0;/// <summary>
+private int Tag{get;set;}=0;/// <summary>
 /// The list of states this state was constructed from, if applicable, otherwise null
 /// </summary>
 public FA[]FromStates{get;private set;}=null;/// <summary>
@@ -1343,11 +1343,12 @@ public static int Match(int[]dfa,IEnumerable<char>text){return Match(dfa,LexCont
 /// </summary>
 /// <param name="tokens">The expressions to add. They typically each have different accept states.</param>
 /// <param name="makeDfa">Make the lexer a DFA. The first disjunction is converted to a DFA and the rest of the state machine is minimized.</param>
+/// <param name="compact">True to compact epsilons, otherwise false. Does nothing if <paramref name="makeDfa"/> is true.</param>
 /// <param name="progress">The progress converting to a lexer (DFA and minimization takes time). Only applies if <paramref name="makeDfa"/> is true.</param>
 /// <returns>The lexer machine</returns>
-public static FA ToLexer(IEnumerable<FA>tokens,bool makeDfa=true,IProgress<int>progress=null){var toks=new List<FA>(tokens);if(makeDfa){for(int i=0;i<
-toks.Count;i++){toks[i]=toks[i].ToMinimized(progress);}}var result=new FA();for(int i=0;i<toks.Count;i++){result.AddEpsilon(toks[i]);}if(makeDfa){return
- result.ToDfa(progress);}else{return result;}}/// <summary>
+public static FA ToLexer(IEnumerable<FA>tokens,bool makeDfa=true,bool compact=true,IProgress<int>progress=null){var toks=new List<FA>(tokens);if(makeDfa)
+{for(int i=0;i<toks.Count;i++){toks[i]=toks[i].ToMinimized(progress);}}var result=new FA();for(int i=0;i<toks.Count;i++){result.AddEpsilon(toks[i],compact);
+}if(makeDfa){return result.ToDfa(progress);}else{return result;}}/// <summary>
 /// Indicates whether this machine will match the indicated text
 /// </summary>
 /// <param name="dfa">The DFA state table</param>

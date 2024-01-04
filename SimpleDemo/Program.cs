@@ -51,14 +51,21 @@ namespace SimpleDemo {
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.jpg",opts);
 			// make a dot file
 			mdfa.RenderToFile(@"..\..\..\expression_dfa_min.dot", opts);
-			var ident = FA.Parse("[A-Z_a-z][0-9A-Z_a-z]*",1);
-			var num = FA.Parse("0|-?[1-9][0-9]*", 2);
-			var ws = FA.Parse("[ ]+", 3);
+			var ident = FA.Parse("[A-Z_a-z][0-9A-Z_a-z]*", 0, false) ;
+			var num = FA.Parse("0|-?[1-9][0-9]*", 1,false);
+			var ws = FA.Parse("[ ]+", 2,false);
 			opts.AcceptSymbolNames = new string[] { "ident", "num", "ws" };
-			var lexer = FA.ToLexer(new FA[] { ident, num, ws },false);
+			
+			var lexer = FA.ToLexer(new FA[] { ident, num, ws },false,false);
+			Console.WriteLine("NFA Lexer state count is {0}", lexer.FillClosure().Count);
+			lexer.RenderToFile(@"..\..\..\lexer_nfa.jpg", opts);
+			foreach (var match in lexer.Search("the quick brown fox jumped over the -10 lazy dog"))
+			{
+				Console.WriteLine("{0}:{1} at {2}", match.SymbolId, match.Value, match.Position);
+			}
+			lexer = FA.ToLexer(new FA[] { ident, num, ws }, true);
 			array = lexer.ToArray();
-			Console.WriteLine("Lexer state count is {0}", lexer.FillClosure().Count);
-			Console.WriteLine("Lexer table length is {0} entries.", array.Length);
+			Console.WriteLine("DFA Lexer table length is {0} entries.", array.Length);
 			lexer.RenderToFile(@"..\..\..\lexer_dfa.jpg", opts);
 			foreach (var match in FA.Search(array, "the quick brown fox jumped over the -10 lazy dog"))
 			{
