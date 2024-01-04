@@ -11,13 +11,19 @@ namespace SimpleDemo {
 				Console.WriteLine("{0} at {1}", match.Value, match.Position);
 			}
 	
-			// parse it
+			// parse it into AST
 			var ast = RegexExpression.Parse(exp);
+			// visit the AST
 			ast.Visit((parent, expr) => { Console.WriteLine(expr.GetType().Name +" "+ expr); return true; });
+			// turn it into a state machine
 			var nfa = ast.ToFA(0,false);
+			// set the ids, which mark the states
 			nfa.SetIds();
+			// clone the path to state 12
 			var cloned = nfa.ClonePathTo(nfa.FindFirst((fa) => { return fa.Id == 12; }));
+			// spit the cloned path out as a JPG
 			cloned.RenderToFile(@"..\..\..\cloned_nfa.jpg");
+			// see if -10 matches
 			Console.WriteLine("-10 is match: {0}", nfa.Match("-10")>-1);
 			var opts = new FADotGraphOptions();
 			// show accept symbols
