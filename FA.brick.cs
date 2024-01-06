@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System.IO;
 using System.Text;
-using System.Transactions;
 using LC;
 using System.Diagnostics;
 namespace F{partial class FA{public partial class CharacterClasses{public static int[][]UnicodeCategories=new int[][]{new int[]{65,90,192,214,216,222,
