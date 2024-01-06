@@ -60,7 +60,7 @@ namespace F
 					break;
 			}
 		}
-		private static void _GenerateRangesExpression(ILGenerator il, int state, Label dest, Label final, int[] ranges)
+		private static void _GenerateRangesExpression(ILGenerator il, bool ismatch, Label dest, Label final, int[] ranges)
 		{
 			for (int i = 0; i < ranges.Length; i+=2)
 			{
@@ -69,15 +69,15 @@ namespace F
 				var next = il.DefineLabel();
 				if (first != last)
 				{
-					il.Emit(OpCodes.Ldloc_3);
+					il.Emit(ismatch?OpCodes.Ldloc_0: OpCodes.Ldloc_3);
 					_EmitConst(il, first);
 					il.Emit(OpCodes.Blt, final);
-					il.Emit(OpCodes.Ldloc_3);
+					il.Emit(ismatch ? OpCodes.Ldloc_0 : OpCodes.Ldloc_3);
 					_EmitConst(il, last);
 					il.Emit(OpCodes.Ble, dest);
 				} else
 				{
-					il.Emit(OpCodes.Ldloc_3);
+					il.Emit(ismatch ? OpCodes.Ldloc_0 : OpCodes.Ldloc_3);
 					_EmitConst(il, first);
 					il.Emit(OpCodes.Beq, dest);
 
@@ -196,7 +196,7 @@ namespace F
 				{
 					var dest = il.DefineLabel();
 					var final = il.DefineLabel();
-					_GenerateRangesExpression(il,i, dest, final,trn.Value);
+					_GenerateRangesExpression(il,false, dest, final,trn.Value);
 					
 					
 					il.MarkLabel(dest);
@@ -258,27 +258,15 @@ namespace F
 				MethodAttributes.Virtual | MethodAttributes.HideBySig, matchReturnType, paramTypes);
 			il = match.GetILGenerator();
 
-			il.DeclareLocal(typeof(long)); // position 0
-			il.DeclareLocal(typeof(int)); // line 1
-			il.DeclareLocal(typeof(int)); // column 2
-			il.DeclareLocal(typeof(int)); // current 3
+			il.DeclareLocal(typeof(int)); // current 0
 
 			states = _DeclareLabelsForStates(il, closure);
-			il.Emit(OpCodes.Ldarg_1);
-			il.EmitCall(OpCodes.Call, lcpos.GetGetMethod(), null);
-			il.Emit(OpCodes.Stloc_0);
-			il.Emit(OpCodes.Ldarg_1);
-			il.EmitCall(OpCodes.Call, lcline.GetGetMethod(), null);
-			il.Emit(OpCodes.Stloc_1);
-			il.Emit(OpCodes.Ldarg_1);
-			il.EmitCall(OpCodes.Call, lccol.GetGetMethod(), null);
-			il.Emit(OpCodes.Stloc_2);
 			start_machine = il.DefineLabel();
 
 			il.Emit(OpCodes.Ldarg_1);
 			il.EmitCall(OpCodes.Call, lccur.GetGetMethod(), null);
-			il.Emit(OpCodes.Stloc_3);
-			il.Emit(OpCodes.Ldloc_3);
+			il.Emit(OpCodes.Stloc_0);
+			il.Emit(OpCodes.Ldloc_0);
 			il.Emit(OpCodes.Ldc_I4_M1);
 			il.Emit(OpCodes.Ceq);
 			il.Emit(OpCodes.Brfalse_S, start_machine);
@@ -307,14 +295,14 @@ namespace F
 				{
 					var dest = il.DefineLabel();
 					var final = il.DefineLabel();
-					_GenerateRangesExpression(il, i, dest, final, trn.Value);
+					_GenerateRangesExpression(il, true, dest, final, trn.Value);
 
 					il.MarkLabel(dest);
 					// matched
 					var si = closure.IndexOf(trn.Key);
 					il.Emit(OpCodes.Ldarg_1);
 					il.EmitCall(OpCodes.Callvirt, lcadv, null);
-					il.Emit(OpCodes.Stloc_3);
+					il.Emit(OpCodes.Stloc_0);
 					il.Emit(OpCodes.Br, states[si]);
 					il.MarkLabel(final);
 					++j;
@@ -323,7 +311,7 @@ namespace F
 				// not matched
 				if (cfa.IsAccepting)
 				{
-					il.Emit(OpCodes.Ldloc_3);
+					il.Emit(OpCodes.Ldloc_0);
 					_EmitConst(il,-1);
 					var no_eof = il.DefineLabel();
 					il.Emit(OpCodes.Bgt,no_eof);
@@ -337,9 +325,9 @@ namespace F
 				{
 					il.Emit(OpCodes.Ldarg_1);
 					il.EmitCall(OpCodes.Callvirt, lcadv, null);
-					il.Emit(OpCodes.Stloc_3);
+					il.Emit(OpCodes.Stloc_0);
 					il.Emit(OpCodes.Ldc_I4_M1);
-					il.Emit(OpCodes.Ldloc_3);
+					il.Emit(OpCodes.Ldloc_0);
 					il.Emit(OpCodes.Beq, retEmpty);
 					il.Emit(OpCodes.Br, states[0]);
 				}
