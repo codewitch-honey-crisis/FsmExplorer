@@ -81,9 +81,7 @@ namespace F
 				}
 				il.MarkLabel(next); 
 			}
-			il.Emit(OpCodes.Br, final); 
-		
-
+			il.Emit(OpCodes.Br, final);
 		}
 		private static Label[] _DeclareLabelsForStates(ILGenerator il, IList<FA> closure)
 		{
@@ -194,7 +192,6 @@ namespace F
 					var dest = il.DefineLabel();
 					var final = il.DefineLabel();
 					_GenerateRangesExpression(il,false, dest, final,trn.Value);
-					
 					
 					il.MarkLabel(dest);
 					// matched
