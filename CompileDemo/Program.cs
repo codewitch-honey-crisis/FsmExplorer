@@ -13,6 +13,11 @@ namespace CompileDemo
 	{
 		static void Main()
 		{
+			Test1();
+			Test2();
+		}
+		static void Test1()
+		{
 			var ident = FA.Parse("[A-Z_a-z][0-9A-Z_a-z]*", 0, false);
 			var num = FA.Parse("0|-?[1-9][0-9]*", 1, false);
 			var ws = FA.Parse("[ ]+", 2, false);
@@ -25,9 +30,8 @@ namespace CompileDemo
 			{
 				Console.WriteLine("{0}:{1}",match, runner.Match(match));
 			}
-			//runner.Match("bar");
 		}
-		static void Main2()
+		static void Test2()
 		{
 			var ident = FA.Parse("[A-Z_a-z][0-9A-Z_a-z]*", 0, false);
 			var num = FA.Parse("0|-?[1-9][0-9]*", 1, false);
@@ -40,7 +44,6 @@ namespace CompileDemo
 			{
 				Console.WriteLine("{0}:{1} at {2}", match.SymbolId, match.Value, match.Position);
 			}
-			//runner.Match("bar");
 		}
 	}
 }
