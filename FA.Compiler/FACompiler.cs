@@ -123,26 +123,28 @@ namespace F
 			var name = "FARunner" + fa.GetHashCode();
 			var asmName = new AssemblyName(name);
 			var asm = Thread.GetDomain().DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
-	
 			ModuleBuilder mod = asm.DefineDynamicModule("M"+name);
 			TypeBuilder type = mod.DefineType(name, TypeAttributes.Public | TypeAttributes.Sealed, typeof(FARunner));
+
+			PropertyInfo lcpos = typeof(LexContext).GetProperty("Position");
+			PropertyInfo lcline = typeof(LexContext).GetProperty("Line");
+			PropertyInfo lccol = typeof(LexContext).GetProperty("Column");
+			PropertyInfo lccur = typeof(LexContext).GetProperty("Current");
+			PropertyInfo lccapb = typeof(LexContext).GetProperty("CaptureBuffer");
+			MethodInfo lccapbts = typeof(StringBuilder).GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+			MethodInfo lcadv = typeof(LexContext).GetMethod("Advance");
+			MethodInfo lccap = typeof(LexContext).GetMethod("Capture");
+			MethodInfo lccc = typeof(LexContext).GetMethod("ClearCapture");
+
 			Type[] paramTypes = new Type[] { typeof(LexContext) };
 			Type searchReturnType = typeof(FAMatch);
 			MethodBuilder searchImpl = type.DefineMethod("SearchImpl", MethodAttributes.Public | MethodAttributes.ReuseSlot |
 				MethodAttributes.Virtual | MethodAttributes.HideBySig, searchReturnType, paramTypes);
 			
 			ILGenerator il = searchImpl.GetILGenerator();
+			
 			MethodInfo createMatch = typeof(FAMatch).GetMethod("Create",BindingFlags.Static| BindingFlags.Public);
-			PropertyInfo lcpos = typeof(LexContext).GetProperty("Position");
-			PropertyInfo lcline = typeof(LexContext).GetProperty("Line");
-			PropertyInfo lccol = typeof(LexContext).GetProperty("Column");
-			PropertyInfo lccur = typeof(LexContext).GetProperty("Current");
-			PropertyInfo lccapb = typeof(LexContext).GetProperty("CaptureBuffer");
-			MethodInfo lccapbts = typeof(StringBuilder).GetMethod("ToString",BindingFlags.Public|BindingFlags.Instance,null,Type.EmptyTypes,null);
-			MethodInfo lcadv = typeof(LexContext).GetMethod("Advance");
-			MethodInfo lccap = typeof(LexContext).GetMethod("Capture");
-			MethodInfo lccc = typeof(LexContext).GetMethod("ClearCapture");
-
+			
 			il.DeclareLocal(typeof(long)); // position 0
 			il.DeclareLocal(typeof(int)); // line 1
 			il.DeclareLocal(typeof(int)); // column 2
@@ -204,7 +206,6 @@ namespace F
 					il.Emit(OpCodes.Br, states[si]);
 					il.MarkLabel(final);
 					++j;
-
 				}
 				// not matched
 				if (cfa.IsAccepting)
@@ -300,7 +301,6 @@ namespace F
 					il.Emit(OpCodes.Br, states[si]);
 					il.MarkLabel(final);
 					++j;
-
 				}
 				// not matched
 				if (cfa.IsAccepting)
