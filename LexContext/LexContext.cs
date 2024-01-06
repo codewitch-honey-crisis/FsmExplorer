@@ -242,8 +242,10 @@ namespace LC
 		public void Capture()
 		{
 			_CheckDisposed();
-			if (EndOfInput != _current && BeforeInput != _current)
-				CaptureBuffer.Append((char)_current);
+			if (_current > 0)
+			{
+				CaptureBuffer.Append(char.ConvertFromUtf32(_current));
+			}
 		}
 		/// <summary>
 		/// Verifies that one of the specified characters is under the input cursor. If it isn't, a <see cref="ExpectingException" /> is raised.

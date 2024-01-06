@@ -62,10 +62,123 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Transactions;
 
 using LC;
 namespace F
 {
+#if FALIB
+	public
+#endif
+	abstract partial class FARunner
+	{
+		internal class Enumerator : IEnumerator<FAMatch>
+		{
+			WeakReference<FARunner> _parent;
+			LexContext _context;
+			FAMatch _current;
+			internal Enumerator(FARunner parent,LexContext context)
+			{
+				_parent = new WeakReference<FARunner>(parent);
+				_context = context;
+			}
+			public FAMatch Current { get { return _current; } }
+			object System.Collections.IEnumerator.Current { get { return Current; } } 
+			
+			public bool MoveNext()
+			{
+				_context.EnsureStarted();
+				if(_context.Current == LexContext.EndOfInput)
+				{
+					return false;
+				}
+				FARunner parent;
+				if(!_parent.TryGetTarget(out parent))
+				{
+					throw new InvalidOperationException("The parent was destroyed");
+				}
+				_context.ClearCapture();
+				_current = parent.SearchImpl(_context);
+				return true;
+			}
+			void System.Collections.IEnumerator.Reset()
+			{
+				throw new NotSupportedException();
+			}
+			void System.IDisposable.Dispose()
+			{
+				
+			}
+		}
+		internal class Enumerable : IEnumerable<FAMatch>
+		{
+			WeakReference<FARunner> _parent;
+			LexContext _context;
+			internal Enumerable(FARunner parent, LexContext context)
+			{
+				_parent = new WeakReference<FARunner>(parent);
+				_context = context;
+			}
+			public IEnumerator<FAMatch> GetEnumerator()
+			{
+				FARunner parent;
+				if (!_parent.TryGetTarget(out parent))
+				{
+					throw new InvalidOperationException("The parent was destroyed");
+				}
+				return new Enumerator(parent,_context);
+			}
+			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+		}
+		protected abstract int MatchImpl(LexContext lc);
+		protected abstract FAMatch SearchImpl(LexContext lc);
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="lc">The <see cref="LexContext"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(LexContext lc)
+		{
+			return new Enumerable(this, lc);
+		}
+		/// <summary>
+		/// Indicates whether this machine will match the indicated text
+		/// </summary>
+		/// <param name="lc">A <see cref="LexContext"/> containing the text</param>
+		/// <returns>The accept symbol if matched, otherwise -1.</returns>
+		public int Match(LexContext lc)
+		{
+			return MatchImpl(lc);
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="@string">The <see cref="IEnumerable{char}"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(IEnumerable<char> @string)
+		{
+			return Search(LexContext.Create(@string));
+		}
+		/// <summary>
+		/// Searches through text for the next occurance of a pattern matchable by this machine
+		/// </summary>
+		/// <param name="reader">The <see cref="TextReader"/> with the text to search</param>
+		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
+		public IEnumerable<FAMatch> Search(TextReader reader)
+		{
+			return Search(LexContext.CreateFrom(reader));
+		}
+		/// <summary>
+		/// Indicates whether this machine will match the indicated text
+		/// </summary>
+		/// <param name="text">The text</param>
+		/// <returns>True if the passed in text was a match, otherwise false.</returns>
+		public int Match(IEnumerable<char> text)
+		{
+			return Match(LexContext.Create(text));
+		}
+
+	}
 	/// <summary>
 	/// Represents a match from <code>FA.Search()</code>
 	/// </summary>
@@ -102,13 +215,16 @@ namespace F
 		/// <param name="position">The absolute codepoint position</param>
 		/// <param name="line">The line</param>
 		/// <param name="column">The column</param>
-		public FAMatch(int symbolId, string value, long position, int line, int column)
+		
+		public static FAMatch Create(int symbolId, string value, long position, int line, int column)
 		{
-			SymbolId = symbolId;
-			Value = value;
-			Position = position;
-			Line = line;
-			Column = column;
+			FAMatch result=default(FAMatch);
+			result.SymbolId = symbolId;
+			result.Value = value;
+			result.Position = position;
+			result.Line = line;
+			result.Column = column;
+			return result;
 		}
 	}
 	/// <summary>
@@ -160,7 +276,7 @@ namespace F
 #if FALIB
 	public
 #endif
-	partial class FA
+	partial class FA : FARunner
 	{
 		/// <summary>
 		/// This state has collapsed epsilons
@@ -2356,21 +2472,8 @@ namespace F
 			}
 			return null;
 		}
-		/// <summary>
-		/// Indicates whether this machine will match the indicated text
-		/// </summary>
-		/// <param name="text">The text</param>
-		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public int Match(IEnumerable<char> text)
-		{
-			return Match(LexContext.Create(text));
-		}
-		/// <summary>
-		/// Indicates whether this machine will match the indicated text
-		/// </summary>
-		/// <param name="lc">A <see cref="LexContext"/> containing the text</param>
-		/// <returns>True if the passed in text was a match, otherwise false.</returns>
-		public int Match(LexContext lc)
+
+		protected override int MatchImpl(LexContext lc)
 		{
 			lc.EnsureStarted();
 			if (IsDeterministic)
@@ -2572,17 +2675,16 @@ namespace F
 		/// </summary>
 		/// <param name="lc">The <see cref="LexContext"/> with the text to search</param>
 		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
-		public IEnumerable<FAMatch> Search(LexContext lc)
+		protected override FAMatch SearchImpl(LexContext lc)
 		{
 			long position = lc.Position;
 			int line = lc.Line;
 			int column = lc.Column;
 
 			lc.EnsureStarted();
-			lc.ClearCapture();
 			if(lc.Current == LexContext.EndOfInput)
 			{
-				yield break;
+				return FAMatch.Create(-1, null, 0, 0, 0);
 			}
 			if(IsDeterministic)
 			{
@@ -2593,18 +2695,16 @@ namespace F
 					if(next!=null)
 					{
 						lc.Capture();
-						state = next;
 						lc.Advance();
-					} else
+						state = next;
+					}
+					else
 					{
 						if (state.IsAccepting)
 						{
-							yield return new FAMatch(state.AcceptSymbol, lc.CaptureBuffer.ToString(), position, line, column);
+							return FAMatch.Create(state.AcceptSymbol, lc.CaptureBuffer.ToString(), position, line, column);
 						}
-						else
-						{
-							lc.Advance();
-						}
+						lc.Advance();
 						lc.ClearCapture();
 						position = lc.Position;
 						line = lc.Line;
@@ -2634,9 +2734,9 @@ namespace F
 						int acc = GetFirstAcceptSymbol(states);
 						if (acc > -1)
 						{
-							yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
+							return FAMatch.Create(acc, lc.CaptureBuffer.ToString(), position, line, column);
 						}
-						else { lc.Advance(); }
+						lc.Advance();
 						lc.ClearCapture();
 						position = lc.Position;
 						line = lc.Line;
@@ -2650,31 +2750,10 @@ namespace F
 					
 				}
 			}
+			return FAMatch.Create(-1, null, 0, 0, 0);
+			
 		}
-		/// <summary>
-		/// Searches through text for the next occurance of a pattern matchable by this machine
-		/// </summary>
-		/// <param name="@string">The <see cref="IEnumerable{char}"/> with the text to search</param>
-		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
-		public IEnumerable<FAMatch> Search(IEnumerable<char> @string)
-		{
-			foreach(var match in Search(LexContext.Create(@string)))
-			{
-				yield return match;
-			}
-		}
-		/// <summary>
-		/// Searches through text for the next occurance of a pattern matchable by this machine
-		/// </summary>
-		/// <param name="reader">The <see cref="TextReader"/> with the text to search</param>
-		/// <returns>A series of <see cref="FAMatch"/> instances with the matches</returns>
-		public IEnumerable<FAMatch> Search(TextReader reader)
-		{
-			foreach (var match in Search(LexContext.CreateFrom(reader)))
-			{
-				yield return match;
-			}
-		}
+		
 		/// <summary>
 		/// Searches through text for the next occurance of a pattern matchable by the indicated machine
 		/// </summary>
@@ -2731,7 +2810,7 @@ namespace F
 				{
 					if (acc!=-1)
 					{
-						yield return new FAMatch(acc, lc.CaptureBuffer.ToString(), position, line, column);
+						yield return FAMatch.Create(acc, lc.CaptureBuffer.ToString(), position, line, column);
 					} else
 					{
 						lc.Advance();

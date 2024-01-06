@@ -21,9 +21,8 @@ namespace SimpleDemo {
 			nfa.SetIds();
 			// clone the path to state 12
 			var cloned = nfa.ClonePathTo(nfa.FindFirst((fa) => { return fa.Id == 12; }));
-			// spit the cloned path out as a JPG
+			// spit the cloned path out 
 			cloned.RenderToFile(@"..\..\..\cloned_nfa.jpg");
-			// see if -10 matches
 			Console.WriteLine("-10 is match: {0}", nfa.Match("-10")>-1);
 			var opts = new FADotGraphOptions();
 			// show accept symbols

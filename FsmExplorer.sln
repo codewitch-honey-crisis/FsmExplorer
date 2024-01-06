@@ -22,6 +22,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsmExplorer", "FsmExplorer\FsmExplorer.csproj", "{6C532A4A-5004-478F-8EE9-C697BC6A628C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FA.Compiler", "FA.Compiler\FA.Compiler.csproj", "{61D76AF1-A483-4DD2-B12D-58C0F5C50CDF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompileDemo", "CompileDemo\CompileDemo.csproj", "{EAE6E9D7-B7ED-40C0-B562-5A3FAFAE5796}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +52,14 @@ Global
 		{6C532A4A-5004-478F-8EE9-C697BC6A628C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C532A4A-5004-478F-8EE9-C697BC6A628C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C532A4A-5004-478F-8EE9-C697BC6A628C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61D76AF1-A483-4DD2-B12D-58C0F5C50CDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61D76AF1-A483-4DD2-B12D-58C0F5C50CDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61D76AF1-A483-4DD2-B12D-58C0F5C50CDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61D76AF1-A483-4DD2-B12D-58C0F5C50CDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAE6E9D7-B7ED-40C0-B562-5A3FAFAE5796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAE6E9D7-B7ED-40C0-B562-5A3FAFAE5796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAE6E9D7-B7ED-40C0-B562-5A3FAFAE5796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAE6E9D7-B7ED-40C0-B562-5A3FAFAE5796}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

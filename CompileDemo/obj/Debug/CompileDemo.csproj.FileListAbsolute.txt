@@ -1,0 +1,14 @@
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\CompileDemo.exe.config
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\CompileDemo.exe
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\CompileDemo.pdb
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\FA.Compiler.dll
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\FA.dll
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\LexContext.dll
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\FA.Compiler.pdb
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\FA.pdb
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\bin\Debug\LexContext.pdb
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\obj\Debug\CompileDemo.csproj.AssemblyReference.cache
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\obj\Debug\CompileDemo.csproj.CoreCompileInputs.cache
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\obj\Debug\CompileDemo.csproj.CopyComplete
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\obj\Debug\CompileDemo.exe
+C:\Users\gazto\source\repos\FsmExplorer\CompileDemo\obj\Debug\CompileDemo.pdb
